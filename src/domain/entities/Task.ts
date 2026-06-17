@@ -68,6 +68,7 @@ export class Task {
         success: this.result.success,
         error: this.result.error,
         executedAt: this.result.executedAt.toISOString(),
+        data: this.result.data ?? null,
       } : null,
     };
   }
