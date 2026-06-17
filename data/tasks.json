@@ -1,0 +1,190 @@
+{
+  "2be2c95b-4267-494c-923d-b9b1999d0c15": {
+    "id": "2be2c95b-4267-494c-923d-b9b1999d0c15",
+    "name": "상품설명_글로우 립스틱",
+    "type": "product_description",
+    "config": {
+      "name": "글로우 립스틱",
+      "category": "립 메이크업"
+    },
+    "status": "completed",
+    "priority": "medium",
+    "createdAt": "2026-06-17T04:39:21.382Z",
+    "result": null
+  },
+  "d06b2916-e1af-4885-a9c3-25b9838f4ad2": {
+    "id": "d06b2916-e1af-4885-a9c3-25b9838f4ad2",
+    "name": "상품설명_비타민C 세럼",
+    "type": "product_description",
+    "config": {
+      "name": "비타민C 세럼",
+      "category": "스킨케어"
+    },
+    "status": "completed",
+    "priority": "medium",
+    "createdAt": "2026-06-17T04:55:37.039Z",
+    "result": null
+  },
+  "ad8adb39-fb9d-45c4-9670-23fb48eef357": {
+    "id": "ad8adb39-fb9d-45c4-9670-23fb48eef357",
+    "name": "데이터동기화_cafe24→meta",
+    "type": "data_sync",
+    "config": {
+      "sourcePlatform": "cafe24",
+      "targetPlatform": "meta"
+    },
+    "status": "completed",
+    "priority": "medium",
+    "createdAt": "2026-06-17T04:55:40.710Z",
+    "result": null
+  },
+  "fb7725a6-0081-42fb-82a6-9f1563a4202a": {
+    "id": "fb7725a6-0081-42fb-82a6-9f1563a4202a",
+    "name": "상품설명_테스트",
+    "type": "product_description",
+    "config": {
+      "name": "테스트",
+      "category": "테스트"
+    },
+    "status": "completed",
+    "priority": "medium",
+    "createdAt": "2026-06-17T04:56:37.852Z",
+    "result": null
+  },
+  "70d66a63-f9ae-4de6-a4ff-bfef3e5b710b": {
+    "id": "70d66a63-f9ae-4de6-a4ff-bfef3e5b710b",
+    "name": "상품설명_글로우 립스틱",
+    "type": "product_description",
+    "config": {
+      "name": "글로우 립스틱",
+      "category": "립 메이크업"
+    },
+    "status": "completed",
+    "priority": "medium",
+    "createdAt": "2026-06-17T04:56:51.310Z",
+    "result": null
+  },
+  "fa1abdcc-b683-4960-a63d-b520e2787cfc": {
+    "id": "fa1abdcc-b683-4960-a63d-b520e2787cfc",
+    "name": "상품설명_글로우 립스틱",
+    "type": "product_description",
+    "config": {
+      "name": "글로우 립스틱",
+      "category": "립 메이크업"
+    },
+    "status": "completed",
+    "priority": "medium",
+    "createdAt": "2026-06-17T04:57:21.491Z",
+    "result": null
+  },
+  "70aa7a15-dda9-46bf-a716-433e73b19e6a": {
+    "id": "70aa7a15-dda9-46bf-a716-433e73b19e6a",
+    "name": "상품설명_글로우 립스틱",
+    "type": "product_description",
+    "config": {
+      "name": "글로우 립스틱",
+      "category": "립 메이크업"
+    },
+    "status": "completed",
+    "priority": "medium",
+    "createdAt": "2026-06-17T05:04:59.072Z",
+    "result": null
+  },
+  "596a8a67-ba3c-4209-a876-be31b4fdbb27": {
+    "id": "596a8a67-ba3c-4209-a876-be31b4fdbb27",
+    "name": "데이터동기화_cafe24→meta",
+    "type": "data_sync",
+    "config": {
+      "sourcePlatform": "cafe24",
+      "targetPlatform": "meta"
+    },
+    "status": "completed",
+    "priority": "medium",
+    "createdAt": "2026-06-17T05:05:18.543Z",
+    "result": null
+  },
+  "6a748ccb-e97d-44bf-910d-08ffa703d90c": {
+    "id": "6a748ccb-e97d-44bf-910d-08ffa703d90c",
+    "name": "신규 상품 출시_step1_product_description",
+    "type": "product_description",
+    "config": {
+      "name": "파이프라인_상품_1",
+      "category": "General",
+      "description": "파이프라인 자동 생성 테스트",
+      "keywords": "test,auto,pipeline"
+    },
+    "status": "failed",
+    "priority": "medium",
+    "createdAt": "2026-06-17T05:05:23.330Z",
+    "result": null
+  },
+  "969444df-00e2-430e-8220-32e76e8323f3": {
+    "id": "969444df-00e2-430e-8220-32e76e8323f3",
+    "name": "신규 상품 출시_step2_product_description",
+    "type": "product_description",
+    "config": {
+      "name": "파이프라인_상품_2",
+      "category": "General",
+      "description": "파이프라인 자동 생성 테스트",
+      "keywords": "test,auto,pipeline"
+    },
+    "status": "pending",
+    "priority": "medium",
+    "createdAt": "2026-06-17T05:05:23.333Z",
+    "result": null
+  },
+  "163e44b7-ec55-48b4-a954-65eebd8d3689": {
+    "id": "163e44b7-ec55-48b4-a954-65eebd8d3689",
+    "name": "신규 상품 출시_step3_product_description",
+    "type": "product_description",
+    "config": {
+      "name": "파이프라인_상품_3",
+      "category": "General",
+      "description": "파이프라인 자동 생성 테스트",
+      "keywords": "test,auto,pipeline"
+    },
+    "status": "pending",
+    "priority": "medium",
+    "createdAt": "2026-06-17T05:05:23.337Z",
+    "result": null
+  },
+  "4ccc09f5-0aaa-4cfa-83ad-ad15ea8763ac": {
+    "id": "4ccc09f5-0aaa-4cfa-83ad-ad15ea8763ac",
+    "name": "상품설명_파이프라인_상품_1",
+    "type": "product_description",
+    "config": {
+      "name": "파이프라인_상품_1",
+      "category": "General"
+    },
+    "status": "completed",
+    "priority": "medium",
+    "createdAt": "2026-06-17T05:05:23.343Z",
+    "result": null
+  },
+  "bc3f6357-47d1-4f47-befe-9cc444991015": {
+    "id": "bc3f6357-47d1-4f47-befe-9cc444991015",
+    "name": "상품설명_글로우 립스틱",
+    "type": "product_description",
+    "config": {
+      "name": "글로우 립스틱",
+      "category": "립 메이크업"
+    },
+    "status": "completed",
+    "priority": "medium",
+    "createdAt": "2026-06-17T05:07:59.791Z",
+    "result": null
+  },
+  "4e995db7-7ec9-4d2c-9b84-6f694ddd011d": {
+    "id": "4e995db7-7ec9-4d2c-9b84-6f694ddd011d",
+    "name": "상품설명_글로우 립스틱",
+    "type": "product_description",
+    "config": {
+      "name": "글로우 립스틱",
+      "category": "립 메이크업"
+    },
+    "status": "completed",
+    "priority": "medium",
+    "createdAt": "2026-06-17T05:10:55.506Z",
+    "result": null
+  }
+}

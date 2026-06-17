@@ -1,0 +1,24 @@
+{
+  "66e7efb5-ba26-4dc2-91d6-9b34c362fdd0": {
+    "id": "66e7efb5-ba26-4dc2-91d6-9b34c362fdd0",
+    "name": "신규 상품 출시",
+    "tasks": [
+      {
+        "id": "6a748ccb-e97d-44bf-910d-08ffa703d90c",
+        "name": "신규 상품 출시_step1_product_description",
+        "type": "product_description"
+      },
+      {
+        "id": "969444df-00e2-430e-8220-32e76e8323f3",
+        "name": "신규 상품 출시_step2_product_description",
+        "type": "product_description"
+      },
+      {
+        "id": "163e44b7-ec55-48b4-a954-65eebd8d3689",
+        "name": "신규 상품 출시_step3_product_description",
+        "type": "product_description"
+      }
+    ],
+    "status": "pending"
+  }
+}

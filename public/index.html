@@ -1,0 +1,754 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>AutoFlow — AI 기반 이커머스 업무 자동화</title>
+<style>
+  :root {
+    --bg: #f8faff;
+    --surface: #ffffff;
+    --surface2: #f0f4fe;
+    --border: #dce3f0;
+    --text: #1a2332;
+    --textDim: #5a6a82;
+    --accent: #4f6ef7;
+    --accentLight: #eef1fe;
+    --accentDark: #3a54d4;
+    --green: #10b981;
+    --greenLight: #d1fae5;
+    --orange: #f59e0b;
+    --orangeLight: #fef3c7;
+    --purple: #8b5cf6;
+    --purpleLight: #ede9fe;
+    --pink: #ec4899;
+    --radius: 14px;
+    --shadow: 0 1px 3px rgba(0,0,0,0.04), 0 4px 16px rgba(0,0,0,0.04);
+  }
+  * { margin: 0; padding: 0; box-sizing: border-box; }
+  body {
+    font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', 'Noto Sans KR', system-ui, sans-serif;
+    background: var(--bg);
+    color: var(--text);
+    min-height: 100vh;
+    -webkit-font-smoothing: antialiased;
+  }
+  .container { max-width: 960px; margin: 0 auto; padding: 0 20px; }
+
+  /* ── Hero ── */
+  .hero {
+    background: linear-gradient(135deg, #4f6ef7 0%, #8b5cf6 50%, #ec4899 100%);
+    color: #fff;
+    padding: 52px 0 48px;
+    position: relative;
+    overflow: hidden;
+  }
+  .hero::after {
+    content: '';
+    position: absolute;
+    inset: 0;
+    background: radial-gradient(ellipse 600px 300px at 90% 20%, rgba(255,255,255,0.12), transparent);
+    pointer-events: none;
+  }
+  .hero .container { position: relative; z-index: 1; }
+  .hero-badge {
+    display: inline-block;
+    background: rgba(255,255,255,0.18);
+    backdrop-filter: blur(4px);
+    padding: 4px 14px;
+    border-radius: 20px;
+    font-size: 12px;
+    font-weight: 600;
+    margin-bottom: 16px;
+    letter-spacing: 0.3px;
+  }
+  .hero h1 {
+    font-size: 34px;
+    font-weight: 800;
+    letter-spacing: -0.5px;
+    margin-bottom: 10px;
+  }
+  .hero h1 span { opacity: 0.85; }
+  .hero p {
+    font-size: 16px;
+    opacity: 0.88;
+    line-height: 1.6;
+    max-width: 600px;
+    margin-bottom: 20px;
+  }
+  .hero-stats {
+    display: flex;
+    gap: 24px;
+    flex-wrap: wrap;
+  }
+  .hero-stat {
+    display: flex;
+    align-items: center;
+    gap: 6px;
+    font-size: 13px;
+    opacity: 0.8;
+  }
+
+  /* ── Info Card ── */
+  .info-card {
+    background: var(--surface);
+    border: 1px solid var(--border);
+    border-radius: var(--radius);
+    padding: 20px 24px;
+    margin: 24px 0;
+    box-shadow: var(--shadow);
+    display: flex;
+    flex-wrap: wrap;
+    align-items: center;
+    justify-content: space-between;
+    gap: 12px;
+  }
+  .info-card .left {
+    display: flex;
+    align-items: center;
+    gap: 14px;
+  }
+  .info-card .icon {
+    width: 40px;
+    height: 40px;
+    background: var(--accentLight);
+    border-radius: 10px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 18px;
+    flex-shrink: 0;
+  }
+  .info-card .info-text { font-size: 14px; line-height: 1.5; }
+  .info-card .info-text strong { color: var(--accent); }
+  .info-card .github-link {
+    padding: 8px 18px;
+    background: var(--text);
+    color: #fff;
+    border-radius: 8px;
+    font-size: 13px;
+    font-weight: 600;
+    text-decoration: none;
+    white-space: nowrap;
+    transition: opacity 0.15s;
+  }
+  .info-card .github-link:hover { opacity: 0.85; }
+
+  /* ── Mock Notice Banner ── */
+  .mock-notice {
+    background: var(--orangeLight);
+    border: 1.5px solid var(--orange);
+    border-radius: var(--radius);
+    padding: 14px 20px;
+    margin: -12px 0 20px;
+    display: flex;
+    align-items: flex-start;
+    gap: 12px;
+    font-size: 13px;
+    line-height: 1.6;
+    box-shadow: var(--shadow);
+  }
+  .mock-notice .icon {
+    font-size: 20px;
+    flex-shrink: 0;
+    margin-top: 1px;
+  }
+  .mock-notice strong { color: #92400e; }
+  .mock-notice .code {
+    display: inline-block;
+    background: rgba(0,0,0,0.06);
+    padding: 1px 6px;
+    border-radius: 4px;
+    font-family: 'SF Mono', 'Fira Code', monospace;
+    font-size: 12px;
+  }
+  .mock-notice .highlight {
+    background: rgba(245,158,11,0.2);
+    padding: 8px 12px;
+    border-radius: 6px;
+    margin-top: 6px;
+    font-size: 12px;
+  }
+  .mock-tag {
+    display: inline-block;
+    background: var(--orangeLight);
+    color: #92400e;
+    font-size: 11px;
+    font-weight: 700;
+    padding: 2px 8px;
+    border-radius: 4px;
+    vertical-align: middle;
+    margin-left: 4px;
+  }
+
+  /* ── Guide ── */
+  .guide {
+    background: var(--surface);
+    border: 1px solid var(--border);
+    border-radius: var(--radius);
+    padding: 24px;
+    margin-bottom: 20px;
+    box-shadow: var(--shadow);
+  }
+  .guide h2 {
+    font-size: 15px;
+    font-weight: 700;
+    margin-bottom: 14px;
+    display: flex;
+    align-items: center;
+    gap: 8px;
+  }
+  .guide-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+    gap: 10px;
+  }
+  .guide-item {
+    background: var(--surface2);
+    border-radius: 10px;
+    padding: 14px 16px;
+    display: flex;
+    align-items: flex-start;
+    gap: 12px;
+    transition: transform 0.15s;
+  }
+  .guide-item:hover { transform: translateY(-1px); }
+  .guide-item .step {
+    width: 26px;
+    height: 26px;
+    background: var(--accent);
+    color: #fff;
+    border-radius: 8px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 13px;
+    font-weight: 700;
+    flex-shrink: 0;
+  }
+  .guide-item .step.green { background: var(--green); }
+  .guide-item .step.orange { background: var(--orange); }
+  .guide-item .step.purple { background: var(--purple); }
+  .guide-item .step.pink { background: var(--pink); }
+  .guide-item strong { display: block; font-size: 14px; margin-bottom: 2px; }
+  .guide-item span { font-size: 12px; color: var(--textDim); line-height: 1.4; }
+
+  /* ── Tabs ── */
+  .tabs {
+    display: flex;
+    gap: 4px;
+    margin-bottom: 16px;
+    background: var(--surface);
+    border: 1px solid var(--border);
+    border-radius: var(--radius);
+    padding: 4px;
+    flex-wrap: wrap;
+    box-shadow: var(--shadow);
+  }
+  .tab {
+    flex: 1;
+    min-width: 110px;
+    padding: 12px 14px;
+    border: none;
+    background: transparent;
+    color: var(--textDim);
+    font-size: 14px;
+    font-weight: 500;
+    border-radius: 10px;
+    cursor: pointer;
+    transition: all 0.2s;
+    text-align: center;
+  }
+  .tab:hover { color: var(--text); background: var(--surface2); }
+  .tab.active {
+    background: var(--accentLight);
+    color: var(--accentDark);
+    font-weight: 600;
+  }
+
+  /* ── Panel ── */
+  .panel { display: none; }
+  .panel.active { display: block; }
+
+  .card {
+    background: var(--surface);
+    border: 1px solid var(--border);
+    border-radius: var(--radius);
+    padding: 24px;
+    margin-bottom: 16px;
+    box-shadow: var(--shadow);
+  }
+  .card h2 { font-size: 17px; font-weight: 700; margin-bottom: 4px; }
+  .card .desc { color: var(--textDim); font-size: 13px; margin-bottom: 20px; line-height: 1.5; }
+
+  /* ── Form ── */
+  .form-group { margin-bottom: 14px; }
+  .form-group label {
+    display: block;
+    font-size: 13px;
+    font-weight: 600;
+    color: var(--textDim);
+    margin-bottom: 5px;
+  }
+  .form-group input, .form-group select, .form-group textarea {
+    width: 100%;
+    padding: 10px 14px;
+    background: var(--bg);
+    border: 1.5px solid var(--border);
+    border-radius: 10px;
+    color: var(--text);
+    font-size: 14px;
+    outline: none;
+    transition: all 0.2s;
+    font-family: inherit;
+  }
+  .form-group textarea { resize: vertical; min-height: 60px; }
+  .form-group input:focus, .form-group select:focus, .form-group textarea:focus {
+    border-color: var(--accent);
+    box-shadow: 0 0 0 3px rgba(79,110,247,0.12);
+  }
+  .form-row {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 12px;
+  }
+
+  /* ── Button ── */
+  .btn {
+    padding: 10px 24px;
+    border: none;
+    border-radius: 10px;
+    font-size: 14px;
+    font-weight: 600;
+    cursor: pointer;
+    transition: all 0.15s;
+    display: inline-flex;
+    align-items: center;
+    gap: 8px;
+  }
+  .btn-primary {
+    background: linear-gradient(135deg, var(--accent), #6d5ae6);
+    color: #fff;
+    box-shadow: 0 2px 8px rgba(79,110,247,0.3);
+  }
+  .btn-primary:hover { transform: translateY(-1px); box-shadow: 0 4px 16px rgba(79,110,247,0.35); }
+  .btn-primary:disabled { opacity: 0.4; cursor: not-allowed; transform: none; box-shadow: none; }
+
+  /* ── Quick Actions ── */
+  .quick-actions { display: flex; gap: 6px; flex-wrap: wrap; margin: 14px 0 4px; }
+  .quick-action {
+    padding: 5px 12px;
+    background: var(--accentLight);
+    border: 1px solid transparent;
+    border-radius: 8px;
+    color: var(--accent);
+    font-size: 12px;
+    font-weight: 500;
+    cursor: pointer;
+    transition: all 0.15s;
+  }
+  .quick-action:hover {
+    border-color: var(--accent);
+    background: var(--surface);
+  }
+
+  /* ── Result ── */
+  .result {
+    display: none;
+    margin-top: 16px;
+    padding: 16px 18px;
+    border-radius: 10px;
+    background: var(--surface2);
+    border: 1.5px solid var(--border);
+  }
+  .result.show { display: block; }
+  .result.success { border-color: var(--green); background: var(--greenLight); }
+  .result.error { border-color: #fca5a5; background: #fef2f2; }
+  .result .title { font-weight: 700; font-size: 14px; margin-bottom: 8px; }
+  .result .content { font-size: 13px; line-height: 1.7; color: var(--text); white-space: pre-wrap; }
+
+  /* ── Spinner ── */
+  .spinner {
+    display: none;
+    width: 18px; height: 18px;
+    border: 2.5px solid rgba(255,255,255,0.3);
+    border-top-color: #fff;
+    border-radius: 50%;
+    animation: spin 0.5s linear infinite;
+  }
+  .spinner.show { display: inline-block; }
+  @keyframes spin { to { transform: rotate(360deg); } }
+
+  /* ── Footer ── */
+  footer {
+    text-align: center;
+    padding: 36px 0 28px;
+    color: var(--textDim);
+    font-size: 13px;
+  }
+  footer a { color: var(--accent); text-decoration: none; font-weight: 500; }
+  footer a:hover { text-decoration: underline; }
+
+  /* ── Responsive ── */
+  @media (max-width: 640px) {
+    .form-row { grid-template-columns: 1fr; }
+    .tabs { flex-direction: column; }
+    .hero h1 { font-size: 26px; }
+    .hero { padding: 36px 0 32px; }
+    .guide-grid { grid-template-columns: 1fr; }
+  }
+</style>
+</head>
+<body>
+
+<!-- ─── HERO ─── -->
+<section class="hero">
+  <div class="container">
+    <div class="hero-badge">⚡ Clean Architecture + SOLID + TypeScript</div>
+    <h1>AutoFlow <span>⚡</span></h1>
+    <p>
+      AI 기반 이커머스 업무 자동화 시스템입니다.<br>
+      상품 설명 자동 생성, 마케팅 리포트, 데이터 동기화, 자동화 파이프라인까지 —
+      클릭 한 번으로 이커머스 운영을 자동화하세요.
+    </p>
+    <div class="hero-stats">
+      <span class="hero-stat">🏗️ Clean Architecture</span>
+      <span class="hero-stat">🧩 SOLID + DI Container</span>
+      <span class="hero-stat">✅ 84개 테스트</span>
+      <span class="hero-stat">📦 TypeScript</span>
+    </div>
+  </div>
+</section>
+
+<main class="container">
+
+  <!-- ─── INFO BAR ─── -->
+  <div class="info-card">
+    <div class="left">
+      <div class="icon">📖</div>
+      <div class="info-text">
+        <strong>AutoFlow</strong> — AI 기반 이커머스 업무 자동화 시스템 ·
+        <strong>v0.1.0</strong> · Mock Mode (API 키 없이 바로 체험 가능)
+      </div>
+    </div>
+    <a class="github-link" href="https://github.com/kongnamul-muchim/autoflow" target="_blank">GitHub →</a>
+  </div>
+
+  <!-- ─── MOCK MODE NOTICE ─── -->
+  <div class="mock-notice">
+    <div class="icon">🔧</div>
+    <div>
+      <strong>현재 Mock 모드로 동작 중입니다.</strong><br>
+      실제 Claude API 키(<span class="code">ANTHROPIC_API_KEY</span>)가 설정되지 않아 <strong>고정된 샘플 데이터</strong>가 출력됩니다.<br>
+      <span style="font-size:12px">→ API 키를 <span class="code">.env</span>에 추가하면 실제 AI가 생성하는 결과물로 자동 전환됩니다 (코드 변경 불필요).</span>
+      <div class="highlight">💡 포트폴리오 제출 시: "데모 모드로 누구나 클릭 한 번에 체험 가능하며, 실제 API 키 연동 시 AI가 실시간 생성합니다"</div>
+    </div>
+  </div>
+
+  <!-- ─── USAGE GUIDE ─── -->
+  <div class="guide">
+    <h2>💡 사용 방법</h2>
+    <div class="guide-grid">
+      <div class="guide-item">
+        <div class="step">1</div>
+        <div>
+          <strong>📝 상품 설명</strong>
+          <span>상품명과 카테고리를 입력하면 AI가 최적화된 제목, 설명, 키워드, USP를 자동 생성합니다.</span>
+        </div>
+      </div>
+      <div class="guide-item">
+        <div class="step green">2</div>
+        <div>
+          <strong>📊 마케팅 리포트</strong>
+          <span>Cafe24, Meta, Naver 등 여러 채널의 데이터를 수집하여 AI가 요약 리포트와 인사이트를 만들어줍니다.</span>
+        </div>
+      </div>
+      <div class="guide-item">
+        <div class="step orange">3</div>
+        <div>
+          <strong>🔄 데이터 동기화</strong>
+          <span>외부 플랫폼(Cafe24↔Meta↔Naver) 간 상품/데이터를 자동으로 동기화합니다. (현재 Mock 모드)</span>
+        </div>
+      </div>
+      <div class="guide-item">
+        <div class="step purple">4</div>
+        <div>
+          <strong>⚙️ 파이프라인</strong>
+          <span>여러 자동화 태스크를 파이프라인으로 묶어 순차 실행합니다. 배치 작업 자동화에 사용하세요.</span>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- ─── TABS ─── -->
+  <div class="tabs">
+    <button class="tab active" data-tab="describe">📝 상품 설명</button>
+    <button class="tab" data-tab="report">📊 마케팅 리포트</button>
+    <button class="tab" data-tab="sync">🔄 데이터 동기화</button>
+    <button class="tab" data-tab="pipeline">⚙️ 파이프라인</button>
+  </div>
+
+  <!-- Tab: 상품 설명 -->
+  <div class="panel active" id="panel-describe">
+    <div class="card">
+      <h2>📝 AI 상품 설명 생성</h2>
+      <p class="desc">상품명과 카테고리만 입력하면 AI가 최적화된 상품 제목, 상세 설명, 마케팅 키워드, 판매 포인트(USP), SEO 메타 설명을 자동으로 생성합니다. 한국어 뷰티/이커머스 특화 프롬프트가 적용됩니다. <span class="mock-tag">MOCK</span></p>
+      <div class="form-row">
+        <div class="form-group">
+          <label>상품명 *</label>
+          <input type="text" id="p-name" placeholder="예: 글로우 립스틱">
+        </div>
+        <div class="form-group">
+          <label>카테고리 *</label>
+          <input type="text" id="p-category" placeholder="예: 립 메이크업">
+        </div>
+      </div>
+      <div class="form-group">
+        <label>원본 설명 (선택)</label>
+        <textarea id="p-desc" placeholder="기존 상품 설명이 있다면 입력하세요. 없으면 비워두셔도 됩니다."></textarea>
+      </div>
+      <div class="form-row">
+        <div class="form-group">
+          <label>키워드 (선택, 쉼표 구분)</label>
+          <input type="text" id="p-keywords" placeholder="예: 립스틱,글로우,지속력">
+        </div>
+        <div class="form-group">
+          <label>톤 (선택)</label>
+          <select id="p-tone">
+            <option value="">기본</option>
+            <option value="프리미엄">프리미엄</option>
+            <option value="트렌디">트렌디</option>
+            <option value="친근한">친근한</option>
+          </select>
+        </div>
+      </div>
+      <button class="btn btn-primary" onclick="describeProduct()">
+        <span class="spinner" id="spinner-describe"></span>
+        <span>✨ 상품 설명 생성</span>
+      </button>
+      <div class="quick-actions">
+        <span class="quick-action" onclick="fillDescribe('글로우 립스틱','립 메이크업','촉촉하고 선명한 발색의 립스틱','립스틱,글로우,발색력')">📌 글로우 립스틱</span>
+        <span class="quick-action" onclick="fillDescribe('비타민C 세럼','스킨케어','환한 피부를 위한 비타민C 세럼','세럼,비타민C,미백')">📌 비타민C 세럼</span>
+        <span class="quick-action" onclick="fillDescribe('울트라 워터 크림','보습','가벼운 제형의 수분 크림','수분크림,보습,산뜻')">📌 울트라 워터 크림</span>
+      </div>
+      <div class="result" id="result-describe"></div>
+    </div>
+  </div>
+
+  <!-- Tab: 마케팅 리포트 -->
+  <div class="panel" id="panel-report">
+    <div class="card">
+      <h2>📊 AI 마케팅 성과 리포트</h2>
+      <p class="desc">Cafe24, Meta, Naver 등 여러 채널의 마케팅 데이터를 수집하여 AI가 요약 리포트와 인사이트를 자동 생성합니다. 총 매출, 비용, ROAS를 계산하고 채널별 비교 인사이트를 제공합니다. <span class="mock-tag">MOCK</span></p>
+      <div class="form-group">
+        <label>플랫폼 (쉼표 구분, 기본: cafe24,meta,naver)</label>
+        <input type="text" id="r-platforms" value="cafe24,meta,naver" placeholder="cafe24,meta,naver">
+      </div>
+      <button class="btn btn-primary" onclick="generateReport()">
+        <span class="spinner" id="spinner-report"></span>
+        <span>📈 리포트 생성</span>
+      </button>
+      <div class="result" id="result-report"></div>
+    </div>
+  </div>
+
+  <!-- Tab: 데이터 동기화 -->
+  <div class="panel" id="panel-sync">
+    <div class="card">
+      <h2>🔄 플랫폼 간 데이터 동기화</h2>
+      <p class="desc">소스 플랫폼의 상품/데이터를 타겟 플랫폼으로 자동 동기화합니다. <span class="mock-tag">MOCK</span></p>
+      <div class="form-row">
+        <div class="form-group">
+          <label>소스 플랫폼 *</label>
+          <select id="s-source">
+            <option value="cafe24">Cafe24</option>
+            <option value="meta">Meta</option>
+            <option value="naver">Naver</option>
+          </select>
+        </div>
+        <div class="form-group">
+          <label>타겟 플랫폼 *</label>
+          <select id="s-target">
+            <option value="cafe24">Cafe24</option>
+            <option value="meta" selected>Meta</option>
+            <option value="naver">Naver</option>
+          </select>
+        </div>
+      </div>
+      <button class="btn btn-primary" onclick="syncData()">
+        <span class="spinner" id="spinner-sync"></span>
+        <span>🔄 동기화 실행</span>
+      </button>
+      <div class="result" id="result-sync"></div>
+    </div>
+  </div>
+
+  <!-- Tab: 파이프라인 -->
+  <div class="panel" id="panel-pipeline">
+    <div class="card">
+      <h2>⚙️ 자동화 파이프라인</h2>
+      <p class="desc">여러 자동화 태스크(상품 설명 생성 등)를 파이프라인으로 묶어 순차 실행합니다. 배포/런칭 시 대량 상품 설명을 한 번에 생성하는 등 배치 작업에 활용할 수 있습니다. <span class="mock-tag">MOCK</span></p>
+      <div class="form-row">
+        <div class="form-group">
+          <label>파이프라인 이름 *</label>
+          <input type="text" id="pl-name" value="신규 상품 출시" placeholder="파이프라인 이름">
+        </div>
+        <div class="form-group">
+          <label>실행할 태스크 수</label>
+          <input type="number" id="pl-steps" value="3" min="1" max="10">
+        </div>
+      </div>
+      <button class="btn btn-primary" onclick="runPipeline()">
+        <span class="spinner" id="spinner-pipeline"></span>
+        <span>▶ 파이프라인 실행</span>
+      </button>
+      <div class="result" id="result-pipeline"></div>
+    </div>
+  </div>
+
+</main>
+
+<footer>
+  <div class="container">
+    <a href="https://github.com/kongnamul-muchim/autoflow" target="_blank">GitHub</a>
+    &nbsp;·&nbsp; Clean Architecture + SOLID + DI Container + TypeScript
+    &nbsp;·&nbsp; Built with Claude Code &middot; 84 tests ✅
+  </div>
+</footer>
+
+<script>
+// ── Tab Switching ──
+document.querySelectorAll('.tab').forEach(tab => {
+  tab.addEventListener('click', () => {
+    document.querySelectorAll('.tab').forEach(t => t.classList.remove('active'));
+    document.querySelectorAll('.panel').forEach(p => p.classList.remove('active'));
+    tab.classList.add('active');
+    document.getElementById('panel-' + tab.dataset.tab).classList.add('active');
+  });
+});
+
+// ── Loading State ──
+function setLoading(id, loading) {
+  document.getElementById('spinner-' + id).classList.toggle('show', loading);
+}
+
+function showResult(id, data) {
+  const el = document.getElementById('result-' + id);
+  el.className = 'result show ' + (data.success ? 'success' : 'error');
+  el.innerHTML = '<div class="title">' + data.message + '</div>';
+  if (data.data) {
+    let html = '<div class="content">';
+    if (data.data.generatedTitle) {
+      html += '<strong>🏷️ 제목:</strong> ' + data.data.generatedTitle + '\n';
+      html += '<strong>📝 설명:</strong> ' + (data.data.generatedDescription || '').substring(0, 300) + (data.data.generatedDescription?.length > 300 ? '...' : '') + '\n';
+      if (data.data.keywords) html += '<strong>🔑 키워드:</strong> ' + data.data.keywords.join(', ') + '\n';
+      if (data.data.sellingPoints) html += '<strong>💰 USP:</strong> ' + data.data.sellingPoints.join(' | ') + '\n';
+      if (data.data.seoDescription) html += '<strong>🔍 SEO:</strong> ' + data.data.seoDescription + '\n';
+    }
+    if (data.data.summary) {
+      html += '<strong>📈 요약:</strong> ' + data.data.summary + '\n';
+      html += '<strong>💰 총 매출:</strong> ₩' + Number(data.data.totalRevenue || 0).toLocaleString() + '\n';
+      html += '<strong>💸 총 비용:</strong> ₩' + Number(data.data.totalCost || 0).toLocaleString() + '\n';
+      html += '<strong>📊 ROAS:</strong> ' + (data.data.roas || 0).toFixed(2) + '\n';
+      if (data.data.insights && data.data.insights.length) {
+        html += '<strong>💡 인사이트:</strong>\n';
+        data.data.insights.forEach(i => { html += '  · ' + i + '\n'; });
+      }
+
+    }
+    if (data.data.pipelineName) {
+      html += '<strong>📋 파이프라인:</strong> ' + data.data.pipelineName + '\n';
+      html += '<strong>📌 상태:</strong> ' + data.data.status + '\n';
+      if (data.data.pipelineId) html += '<strong>🆔 ID:</strong> ' + data.data.pipelineId.substring(0, 8) + '...\n';
+    }
+    if (data.data.productsSynced) {
+      html += '<strong>🔄 동기화 완료:</strong> ' + data.data.sourcePlatform + ' → ' + data.data.targetPlatform + '\n';
+      html += '<strong>📦 동기화 상품:</strong> ' + data.data.productsSynced + '개\n';
+      if (data.data.products) {
+        html += '<strong>📋 상품 목록:</strong>\n';
+        data.data.products.forEach(p => {
+          html += '  · ' + p.name + ' (₩' + Number(p.price).toLocaleString() + ')\n';
+        });
+      }
+    }
+    html += '</div>';
+    el.innerHTML += html;
+  }
+  // Append mock mode notice to every result
+  if (data.success) {
+    const mockNote = document.createElement('div');
+    mockNote.style.cssText = 'margin-top:12px;padding:8px 12px;background:#fef3c7;border-radius:6px;font-size:11px;color:#92400e;border:1px solid #fbbf24;line-height:1.5';
+    mockNote.innerHTML = '🔧 <strong>Mock 데이터</strong> — 실제 Claude API 키(ANTHROPIC_API_KEY)를 연결하면 AI가 실시간 생성하는 결과물로 전환됩니다. <a href="https://github.com/kongnamul-muchim/autoflow" target="_blank" style="color:#4f6ef7;font-weight:500;text-decoration:none">GitHub</a>';
+    el.appendChild(mockNote);
+  }
+  el.scrollIntoView({ behavior: 'smooth', block: 'nearest' });
+}
+
+// ── API Calls ──
+async function apiCall(endpoint, body, spinnerId) {
+  setLoading(spinnerId, true);
+  try {
+    const res = await fetch('/autoflow/api/' + endpoint, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify(body),
+    });
+    const data = await res.json();
+    return data;
+  } catch (e) {
+    return { success: false, message: '❌ 네트워크 오류: ' + e.message };
+  } finally {
+    setLoading(spinnerId, false);
+  }
+}
+
+// ── Describe ──
+async function describeProduct() {
+  const name = document.getElementById('p-name').value.trim();
+  const category = document.getElementById('p-category').value.trim();
+  if (!name || !category) { alert('상품명과 카테고리를 입력해주세요.'); return; }
+  const result = await apiCall('describe', {
+    name, category,
+    description: document.getElementById('p-desc').value.trim(),
+    keywords: document.getElementById('p-keywords').value.trim(),
+    tone: document.getElementById('p-tone').value,
+  }, 'describe');
+  showResult('describe', result);
+}
+
+function fillDescribe(name, cat, desc, kw) {
+  document.getElementById('p-name').value = name;
+  document.getElementById('p-category').value = cat;
+  document.getElementById('p-desc').value = desc;
+  document.getElementById('p-keywords').value = kw;
+}
+
+// ── Report ──
+async function generateReport() {
+  const result = await apiCall('report', {
+    platforms: document.getElementById('r-platforms').value.trim(),
+  }, 'report');
+  showResult('report', result);
+}
+
+// ── Sync ──
+async function syncData() {
+  const source = document.getElementById('s-source').value;
+  const target = document.getElementById('s-target').value;
+  if (source === target) { alert('소스와 타겟이 같습니다. 다른 플랫폼을 선택해주세요.'); return; }
+  const result = await apiCall('sync', { source, target }, 'sync');
+  showResult('sync', result);
+}
+
+// ── Pipeline ──
+async function runPipeline() {
+  const name = document.getElementById('pl-name').value.trim();
+  const steps = document.getElementById('pl-steps').value;
+  if (!name) { alert('파이프라인 이름을 입력해주세요.'); return; }
+  const result = await apiCall('pipeline', { name, steps: parseInt(steps) || 1 }, 'pipeline');
+  showResult('pipeline', result);
+}
+</script>
+
+</body>
+</html>
