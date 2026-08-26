@@ -26,17 +26,22 @@ export class WebController {
     name: string;
     category: string;
     description?: string;
-    keywords?: string;
+    keywords?: string | string[];
     audience?: string;
     tone?: string;
   }): Promise<ApiResponse> {
     try {
       this.logger.info('WebController', 'describe-product', params);
+      const keywords = Array.isArray(params.keywords)
+        ? params.keywords
+        : params.keywords
+          ? params.keywords.split(',').map((s: string) => s.trim())
+          : [];
       const request = new CreateProductRequest(
         params.name,
         params.category,
         params.description || '',
-        params.keywords ? params.keywords.split(',').map((s: string) => s.trim()) : [],
+        keywords,
         params.audience,
         params.tone,
       );

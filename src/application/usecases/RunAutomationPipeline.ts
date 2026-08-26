@@ -1,7 +1,7 @@
 import { ITaskRepository, IPipelineRepository } from '../../domain/ports/IRepository.js';
 import { ILogger } from '../../domain/ports/ILogger.js';
 import { Pipeline } from '../../domain/entities/Pipeline.js';
-import { Task } from '../../domain/entities/Task.js';
+import { Task, TaskResult } from '../../domain/entities/Task.js';
 import { TaskType } from '../../domain/valueObjects/Types.js';
 import { CreateProductDescription } from './CreateProductDescription.js';
 import { GenerateMarketingReport } from './GenerateMarketingReport.js';
@@ -49,6 +49,7 @@ export class RunAutomationPipeline {
     // Execute each task sequentially
     for (const task of pipelineTasks) {
       try {
+        task.start();
         this.logger.info('RunAutomationPipeline', `Executing task: ${task.name}`, { taskId: task.id });
 
         let result: unknown;
@@ -79,7 +80,8 @@ export class RunAutomationPipeline {
         }
 
         results.push(result);
-        task.complete(task.result!);
+        const taskResult = TaskResult.success(task.id, result);
+        task.complete(taskResult);
         await this.taskRepository.updateStatus(task.id, 'completed');
       } catch (error) {
         const message = error instanceof Error ? error.message : 'Unknown error';
