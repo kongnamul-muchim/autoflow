@@ -74,6 +74,25 @@ Domain (순수 비즈니스 모델) ← Ports(인터페이스) ← Use Cases ←
 
 ---
 
+## 🔧 실행 방법
+
+```bash
+# 1) 클론
+git clone https://github.com/kongnamul-muchim/autoflow.git
+cd autoflow
+
+# 2) 의존성 설치
+npm install
+
+# 3) 개발 모드 실행 (CLI, Mock 모드라 API 키 없이 바로 동작)
+npm run dev
+```
+
+> `npm run dev`는 `tsx src/main.ts`(CLI)를 실행합니다. 어떤 명령을 쓸 수 있는지는 `npm run dev -- --help`로 확인하세요.
+> 웹 데모 UI를 열려면 `npm run serve` → 브라우저에서 `http://localhost:4002`.
+
+---
+
 ## 🚀 Quick Start
 
 ### 설치
