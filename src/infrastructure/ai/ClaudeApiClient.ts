@@ -2,16 +2,72 @@ import { IAiService } from '../../core/domain/ports/IAiService.js';
 import { ILogger } from '../../core/domain/ports/ILogger.js';
 import { AppConfig } from '../../core/domain/ports/IConfigService.js';
 
+type ProviderKind = 'anthropic' | 'openai-compatible';
+
+interface ResolvedProvider {
+  kind: ProviderKind;
+  name: string;
+  key: string;
+  baseUrl: string;
+  model: string;
+}
+
 export class ClaudeApiClient implements IAiService {
   /** 마지막 실제 호출이 실패했는지. 키가 있어도 실패하면 degraded 로 알린다. */
   private lastFailed = false;
-  private readonly baseUrl = process.env.ANTHROPIC_BASE_URL || 'https://api.anthropic.com';
-  private readonly model = process.env.AUTOFLOW_MODEL || 'claude-sonnet-4-20250514';
 
   constructor(
     private readonly logger: ILogger,
     private readonly config: AppConfig,
   ) {}
+
+  /**
+   * 프로바이더는 환경변수로만 결정된다. 코드는 건드리지 않는다.
+   *  AI_PROVIDER=anthropic(기본)  ANTHROPIC_API_KEY · ANTHROPIC_BASE_URL · AUTOFLOW_MODEL
+   *  AI_PROVIDER=deepseek          DEEPSEEK_API_KEY · DEEPSEEK_API_BASE · DEEPSEEK_MODEL
+   *  AI_PROVIDER=openai            AI_API_KEY · AI_BASE_URL · AI_MODEL
+   */
+  private resolveProvider(): ResolvedProvider {
+    const provider = (process.env.AI_PROVIDER || 'anthropic').toLowerCase();
+
+    if (provider === 'deepseek') {
+      return {
+        kind: 'openai-compatible',
+        name: 'deepseek',
+        key: process.env.DEEPSEEK_API_KEY || process.env.AI_API_KEY || '',
+        baseUrl: process.env.DEEPSEEK_API_BASE || process.env.AI_BASE_URL || 'https://api.deepseek.com',
+        model: process.env.DEEPSEEK_MODEL || process.env.AI_MODEL || 'deepseek-chat',
+      };
+    }
+
+    if (provider === 'openai') {
+      return {
+        kind: 'openai-compatible',
+        name: 'openai',
+        key: process.env.AI_API_KEY || '',
+        baseUrl: process.env.AI_BASE_URL || 'https://api.openai.com',
+        model: process.env.AI_MODEL || 'gpt-4o-mini',
+      };
+    }
+
+    return {
+      kind: 'anthropic',
+      name: 'anthropic',
+      key: this.config.anthropicApiKey || process.env.AI_API_KEY || '',
+      baseUrl: process.env.ANTHROPIC_BASE_URL || 'https://api.anthropic.com',
+      model: process.env.AUTOFLOW_MODEL || 'claude-sonnet-4-20250514',
+    };
+  }
+
+  /** 키가 실제로 들어와 있는가. */
+  isConfigured(): boolean {
+    return this.resolveProvider().key !== '';
+  }
+
+  /** 지금 어떤 프로바이더로 붙어 있는지. /api/health 가 그대로 노출한다. */
+  providerName(): string {
+    return this.resolveProvider().name;
+  }
 
   /**
    * 현재 모드.
@@ -20,7 +76,7 @@ export class ClaudeApiClient implements IAiService {
    *  live     — 키가 있고 실제 호출이 성공(또는 아직 실패 이력 없음).
    */
   aiStatus(): 'live' | 'sample' | 'degraded' {
-    if (!this.config.anthropicApiKey) return 'sample';
+    if (!this.isConfigured()) return 'sample';
     return this.lastFailed ? 'degraded' : 'live';
   }
 
@@ -29,51 +85,24 @@ export class ClaudeApiClient implements IAiService {
   }
 
   async generateText(prompt: string, systemPrompt?: string): Promise<string> {
+    const provider = this.resolveProvider();
+
     this.logger.info('ClaudeApiClient', 'Generating text', {
+      provider: provider.name,
+      model: provider.model,
       promptLength: prompt.length,
       hasSystemPrompt: !!systemPrompt,
     });
 
-    return this.callClaude(prompt, systemPrompt);
-  }
-
-  private async callClaude(prompt: string, systemPrompt?: string): Promise<string> {
-    const apiKey = this.config.anthropicApiKey;
-
-    if (!apiKey || apiKey === '') {
-      this.logger.warn('ClaudeApiClient', 'No API key configured, using mock response');
+    if (!provider.key) {
+      this.logger.warn('ClaudeApiClient', `No API key for provider "${provider.name}", using mock response`);
       return this.generateMockResponse(prompt);
     }
 
     try {
-      const body: Record<string, unknown> = {
-        model: this.model,
-        max_tokens: 4096,
-        messages: [{ role: 'user' as const, content: prompt }],
-      };
-      if (systemPrompt) {
-        body.system = systemPrompt;
-      }
-
-      const response = await fetch(`${this.baseUrl}/v1/messages`, {
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-          'x-api-key': apiKey,
-          'anthropic-version': '2023-06-01',
-        },
-        body: JSON.stringify(body),
-      });
-
-      if (!response.ok) {
-        throw new Error(`Claude API error: ${response.status} ${response.statusText}`);
-      }
-
-      const data = await response.json() as { content?: Array<{ text?: string }> };
-      const text = data.content?.[0]?.text;
-      if (!text) {
-        throw new Error('Claude API response has no text content');
-      }
+      const text = provider.kind === 'anthropic'
+        ? await this.callAnthropic(provider, prompt, systemPrompt)
+        : await this.callOpenAiCompatible(provider, prompt, systemPrompt);
       this.lastFailed = false;
       return text;
     } catch (error) {
@@ -81,6 +110,72 @@ export class ClaudeApiClient implements IAiService {
       this.logger.error('ClaudeApiClient', 'API call failed, falling back to mock', error);
       return this.generateMockResponse(prompt);
     }
+  }
+
+  private async callAnthropic(provider: ResolvedProvider, prompt: string, systemPrompt?: string): Promise<string> {
+    const body: Record<string, unknown> = {
+      model: provider.model,
+      max_tokens: 4096,
+      messages: [{ role: 'user' as const, content: prompt }],
+    };
+    if (systemPrompt) {
+      body.system = systemPrompt;
+    }
+
+    const response = await fetch(`${provider.baseUrl.replace(/\/$/, '')}/v1/messages`, {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
+        'x-api-key': provider.key,
+        'anthropic-version': '2023-06-01',
+      },
+      body: JSON.stringify(body),
+    });
+
+    if (!response.ok) {
+      throw new Error(`Anthropic API error: ${response.status} ${response.statusText}`);
+    }
+
+    const data = await response.json() as { content?: Array<{ text?: string }> };
+    const text = data.content?.[0]?.text;
+    if (!text) {
+      throw new Error('Anthropic API response has no text content');
+    }
+    return text;
+  }
+
+  private async callOpenAiCompatible(provider: ResolvedProvider, prompt: string, systemPrompt?: string): Promise<string> {
+    const base = provider.baseUrl.replace(/\/$/, '');
+    // base 가 이미 버전 경로까지 포함하면 그대로 쓰고, 아니면 /v1 을 붙인다.
+    // 예) https://api.deepseek.com            → /v1/chat/completions
+    //     https://.../v1beta/openai/          → /chat/completions  (Gemini 호환)
+    //     http://127.0.0.1:8000/v1            → /chat/completions  (vLLM 등)
+    const endpoint = /\/(v\d+[a-z0-9]*|openai)$/i.test(base)
+      ? `${base}/chat/completions`
+      : `${base}/v1/chat/completions`;
+    const messages = systemPrompt
+      ? [{ role: 'system', content: systemPrompt }, { role: 'user', content: prompt }]
+      : [{ role: 'user', content: prompt }];
+
+    const response = await fetch(endpoint, {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
+        Authorization: `Bearer ${provider.key}`,
+      },
+      body: JSON.stringify({ model: provider.model, messages, temperature: 0.7, max_tokens: 2048 }),
+    });
+
+    if (!response.ok) {
+      throw new Error(`${provider.name} API error: ${response.status} ${response.statusText}`);
+    }
+
+    const data = await response.json() as { choices?: Array<{ message?: { content?: string } }> };
+    const text = data.choices?.[0]?.message?.content;
+    if (!text) {
+      throw new Error(`${provider.name} API response has no text content`);
+    }
+    return text;
   }
 
   private generateMockResponse(prompt: string): string {

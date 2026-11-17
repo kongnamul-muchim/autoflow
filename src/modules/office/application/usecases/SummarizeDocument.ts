@@ -1,4 +1,5 @@
 import * as crypto from 'node:crypto';
+import { parseJsonObject, toStringArray } from '../../../../core/application/support/jsonResponse.js';
 import { IAiService } from '../../../../core/domain/ports/IAiService.js';
 import { ILogger } from '../../../../core/domain/ports/ILogger.js';
 import { Document, DocumentSummary } from '../../domain/valueObjects/Document.js';
@@ -42,16 +43,12 @@ export class SummarizeDocument {
 
     const response = await this.aiService.generateText(prompt, 'You are an expert business document analyst.');
 
-    let parsed: { summary: string; keyPoints: string[]; actionItems: string[] };
-    try {
-      parsed = JSON.parse(response);
-    } catch {
-      parsed = {
-        summary: response.substring(0, 200),
-        keyPoints: [],
-        actionItems: [],
-      };
-    }
+    const raw = parseJsonObject<Record<string, unknown>>(response) ?? {};
+    const parsed = {
+      summary: typeof raw.summary === 'string' ? raw.summary.trim() : response.replace(/```[a-z]*|```/gi, '').trim().substring(0, 200),
+      keyPoints: toStringArray(raw.keyPoints),
+      actionItems: toStringArray(raw.actionItems),
+    };
 
     this.logger.info('SummarizeDocument', 'Document summarized successfully', {
       docId,

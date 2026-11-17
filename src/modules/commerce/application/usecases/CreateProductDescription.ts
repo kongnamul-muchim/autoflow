@@ -1,6 +1,7 @@
 import * as crypto from 'node:crypto';
 import { ITaskRepository } from '../../../../core/domain/ports/IRepository.js';
 import { ILogger } from '../../../../core/domain/ports/ILogger.js';
+import { parseJsonObject, toStringArray } from '../../../../core/application/support/jsonResponse.js';
 import { IAiService } from '../../../../core/domain/ports/IAiService.js';
 import { Task } from '../../../../core/domain/entities/Task.js';
 import { TaskResult } from '../../../../core/domain/entities/Task.js';
@@ -90,23 +91,30 @@ Format your response as JSON:
   }
 
   private parseContent(response: string): { title: string; description: string; keywords: string[]; sellingPoints: string[]; seoDescription: string } {
-    try {
-      const parsed = JSON.parse(response);
+    const parsed = parseJsonObject<Record<string, unknown>>(response) ?? {};
+    const title = typeof parsed.title === 'string' ? parsed.title.trim() : '';
+    const description = typeof parsed.description === 'string' ? parsed.description.trim() : '';
+    const seoDescription = typeof parsed.seoDescription === 'string' ? parsed.seoDescription.trim() : '';
+
+    if (title || description) {
       return {
-        title: parsed.title || '',
-        description: parsed.description || '',
-        keywords: parsed.keywords || [],
-        sellingPoints: parsed.sellingPoints || [],
-        seoDescription: parsed.seoDescription || '',
-      };
-    } catch {
-      return {
-        title: '자동 생성 상품',
-        description: response,
-        keywords: [],
-        sellingPoints: [],
-        seoDescription: response.substring(0, 150),
+        title,
+        description,
+        keywords: toStringArray(parsed.keywords),
+        sellingPoints: toStringArray(parsed.sellingPoints),
+        seoDescription,
       };
     }
+
+    // JSON 을 못 건졌으면 본문을 그대로 살린다. 제목은 첫 줄에서 뽑는다.
+    const plain = response.replace(/```[a-z]*|```/gi, '').trim();
+    const firstLine = plain.split('\n').map((line) => line.trim()).find((line) => line.length > 0) ?? '';
+    return {
+      title: firstLine.slice(0, 50) || '자동 생성 상품',
+      description: plain,
+      keywords: [],
+      sellingPoints: [],
+      seoDescription: plain.substring(0, 150),
+    };
   }
 }

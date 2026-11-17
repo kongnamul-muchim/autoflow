@@ -256,28 +256,53 @@ npm run test:coverage
 
 ## 🔌 AI 연결 방식 (키 주입식)
 
-AI 호출은 `src/infrastructure/ai/ClaudeApiClient.ts` 한 곳에 모여 있고, 키는 코드가 아니라 **환경변수**로 들어간다.
-키가 없으면 샘플 응답, 있으면 실제 Claude 응답 — 코드는 그대로다.
+AI 호출은 `src/infrastructure/ai/ClaudeApiClient.ts` 한 곳에 모여 있고, 키와 프로바이더는 코드가 아니라
+**환경변수**로 들어간다. 코드는 그대로 두고 환경변수만 바꾸면 다른 모델로 갈아탄다.
+
+| `AI_PROVIDER` | 읽는 변수 | 엔드포인트 형식 |
+|---|---|---|
+| `anthropic` (기본) | `ANTHROPIC_API_KEY`, `ANTHROPIC_BASE_URL`, `AUTOFLOW_MODEL` | `/v1/messages` |
+| `deepseek` | `DEEPSEEK_API_KEY`, `DEEPSEEK_API_BASE`, `DEEPSEEK_MODEL` | OpenAI 호환 `/chat/completions` |
+| `openai` | `AI_API_KEY`, `AI_BASE_URL`, `AI_MODEL` | OpenAI 호환 `/chat/completions` |
+
+OpenAI 호환 경로는 base 에 버전이 이미 들어 있으면(`/v1`, `/v1beta/openai`) 그대로 쓰고, 아니면 `/v1` 을 붙인다.
+그래서 DeepSeek·Gemini·vLLM·OpenRouter 를 같은 코드로 쓸 수 있다.
 
 ```bash
 cp .env.example .env
-# .env → ANTHROPIC_API_KEY=sk-ant-...
+# .env → AI_PROVIDER=deepseek, DEEPSEEK_API_KEY=...
 AUTOFLOW_MODULE=commerce AUTOFLOW_PORT=4002 npm run serve
 ```
 
-현재 모드는 서버가 직접 알려준다. 화면 문구를 손으로 바꿀 필요가 없다.
+현재 모드와 프로바이더는 서버가 직접 알려준다. 화면 문구를 손으로 바꿀 필요가 없다.
 
 ```bash
 curl -s localhost:4002/api/health
-# 키 없음: {"status":"ok","module":"commerce","version":"0.2.0","aiMode":"sample"}
-# 키 있음: {"status":"ok","module":"commerce","version":"0.2.0","aiMode":"live"}
+# 키 없음        : {"aiMode":"sample","aiProvider":"anthropic"}
+# 키 있고 정상    : {"aiMode":"live","aiProvider":"deepseek"}
+# 키 있는데 실패  : {"aiMode":"degraded","aiProvider":"deepseek"}
 ```
 
-`aiMode` 는 마지막 AI 호출이 실제로 성공했는지로 결정된다. 키는 있는데 호출이 실패하면 `sample` 로 떨어진다
-(키가 있다고 무조건 `live` 라고 말하지 않는다).
+`sample` 은 키가 없다는 뜻이고, `degraded` 는 키는 있는데 마지막 호출이 실패해 예시로 떨어졌다는 뜻이다.
+키가 있다고 무조건 `live` 라고 말하지 않는다.
 
-검증 방법: `ANTHROPIC_BASE_URL` 을 로컬 스텁으로 돌려 키 주입 경로가 실제로 도는지 확인할 수 있다.
-`node --test`, `npm test` 로 단위 테스트를 돌린 뒤 위 `/api/health` 값까지 확인하는 순서를 권장한다.
+### 응답 파싱
+
+실제 모델은 JSON 만 달랑 주지 않는다. ` ```json ` 펜스로 감싸거나 앞뒤에 설명을 붙인다.
+`src/core/application/support/jsonResponse.ts` 가 펜스 제거 → 원문 → 첫 `{`~마지막 `}` 순으로 시도하고,
+배열이 문자열로 올 때도 받아준다. 이 경로가 없으면 제목이 `자동 생성 상품` 으로 떨어지고 키워드가 비는데,
+mock 응답은 항상 깨끗한 JSON 이라 **mock 만 쓰면 이 결함이 보이지 않는다.**
+
+### 키 없이 검증하기
+
+`tests/stub_anthropic.py` 는 Anthropic·OpenAI 두 형식을 모두 흉내내고, OpenAI 쪽은 일부러 코드 펜스로 감싸 보낸다.
+
+```bash
+python3 tests/stub_anthropic.py &                      # 127.0.0.1:4999
+AI_PROVIDER=deepseek DEEPSEEK_API_KEY=stub \
+DEEPSEEK_API_BASE=http://127.0.0.1:4999/v1 DEEPSEEK_MODEL=stub \
+AUTOFLOW_MODULE=commerce AUTOFLOW_PORT=4002 npm run serve
+```
 
 모듈은 같은 코드로 두 개를 띄운다.
 

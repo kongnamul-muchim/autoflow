@@ -19,7 +19,12 @@ async function createApp() {
   const aiMode = (): 'live' | 'sample' | 'degraded' => {
     const probe = aiService as unknown as { aiStatus?: () => 'live' | 'sample' | 'degraded' };
     if (typeof probe.aiStatus === 'function') return probe.aiStatus();
-    return process.env.ANTHROPIC_API_KEY ? 'live' : 'sample';
+    return 'sample';
+  };
+
+  const aiProvider = (): string => {
+    const probe = aiService as unknown as { providerName?: () => string };
+    return typeof probe.providerName === 'function' ? probe.providerName() : 'unknown';
   };
 
   const webController = new WebController(
@@ -56,7 +61,7 @@ async function createApp() {
 
   // Health check
   app.get('/api/health', (_req, res) => {
-    res.json({ status: 'ok', module: MODULE, version: '0.2.0', aiMode: aiMode() });
+    res.json({ status: 'ok', module: MODULE, version: '0.2.0', aiMode: aiMode(), aiProvider: aiProvider() });
   });
 
   // 파이프라인 실행

@@ -33,6 +33,15 @@ describe('ClaudeApiClient', () => {
 
   beforeEach(() => {
     logger = new TestLogger();
+    // 테스트가 개발 셸의 환경변수에 끌려가지 않게 고정한다.
+    // (키가 export 되어 있으면 조용히 실제 API 를 호출해 타임아웃난다)
+    for (const key of [
+      'AI_PROVIDER', 'AI_API_KEY', 'AI_BASE_URL', 'AI_MODEL',
+      'DEEPSEEK_API_KEY', 'DEEPSEEK_API_BASE', 'DEEPSEEK_MODEL',
+      'ANTHROPIC_API_KEY', 'ANTHROPIC_BASE_URL', 'AUTOFLOW_MODEL',
+    ]) {
+      delete process.env[key];
+    }
   });
 
   describe('generateText (Mock 모드)', () => {
