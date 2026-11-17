@@ -15,6 +15,8 @@
  * 4개월을 보낸 사례가 있었다.
  */
 
+import type { AiOverride } from './requestAiConfig.js';
+
 export type AiProtocol = 'anthropic' | 'openai';
 
 export interface ProviderPreset {
@@ -94,7 +96,7 @@ export interface ResolvedProvider {
   baseUrl: string;
   model: string;
   /** base/model/키를 어디서 읽었는지. 화면·로그에서 근거로 쓴다. */
-  source: 'generic' | 'legacy' | 'default';
+  source: 'generic' | 'legacy' | 'default' | 'byok';
   warning?: string;
 }
 
@@ -141,8 +143,15 @@ function mismatchWarning(id: string, baseUrl: string): string | undefined {
 export function resolveProvider(
   env: NodeJS.ProcessEnv = process.env,
   configKey?: string,
+  override?: AiOverride,
 ): ResolvedProvider {
-  const id = (env.AI_PROVIDER || '').trim().toLowerCase() || inferProvider(env);
+  // 방문자가 자기 키를 넣은 경우: provider/model 은 그 사람 선택, base 는 서버 env 만.
+  const byok = override && override.key ? override : undefined;
+  const id = (
+    (byok?.provider || '').trim().toLowerCase() ||
+    (env.AI_PROVIDER || '').trim().toLowerCase() ||
+    inferProvider(env)
+  );
   const preset = PROVIDER_PRESETS[id];
 
   if (!preset) {
@@ -150,10 +159,10 @@ export function resolveProvider(
     return {
       id,
       protocol: 'openai',
-      key: pick(env, 'AI_API_KEY'),
+      key: byok?.key || pick(env, 'AI_API_KEY'),
       baseUrl: pick(env, 'AI_BASE_URL') || '',
-      model: pick(env, 'AI_MODEL') || '',
-      source: 'generic',
+      model: (byok?.model || '').trim() || pick(env, 'AI_MODEL') || '',
+      source: byok ? 'byok' : 'generic',
       warning: `모르는 프로바이더입니다: ${id} (가능: ${known}). AI_BASE_URL 을 직접 지정하세요.`,
     };
   }
@@ -161,20 +170,22 @@ export function resolveProvider(
   const genericKey = pick(env, 'AI_API_KEY');
   const legacyKey = pick(env, preset.legacyKey);
   const configFallback = id === 'anthropic' ? (configKey || '').trim() : '';
-  const key = genericKey || legacyKey || configFallback;
-  const source: ResolvedProvider['source'] = genericKey ? 'generic' : legacyKey || configFallback ? 'legacy' : 'default';
+  const key = byok ? byok.key : genericKey || legacyKey || configFallback;
+  const source: ResolvedProvider['source'] = byok
+    ? 'byok'
+    : genericKey ? 'generic' : legacyKey || configFallback ? 'legacy' : 'default';
 
   const genericBase = pick(env, 'AI_BASE_URL');
   const legacyBase = pick(env, preset.legacyBase);
   const baseUrl = (genericBase || legacyBase || preset.baseUrl).replace(/\/+$/, '');
 
-  const model = pick(env, 'AI_MODEL', preset.legacyModel) || preset.model;
+  const model = (byok?.model || '').trim() || pick(env, 'AI_MODEL', preset.legacyModel) || preset.model;
 
   const warnings: string[] = [];
   const mismatch = mismatchWarning(id, baseUrl);
   if (mismatch) warnings.push(mismatch);
 
-  if (!key) {
+  if (!key && !byok) {
     const otherWithKey = Object.keys(PROVIDER_PRESETS).find(
       (other) => other !== id && PROVIDER_PRESETS[other].legacyKey && pick(env, PROVIDER_PRESETS[other].legacyKey),
     );

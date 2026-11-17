@@ -2,6 +2,7 @@ import { IAiService } from '../../core/domain/ports/IAiService.js';
 import { ILogger } from '../../core/domain/ports/ILogger.js';
 import { AppConfig } from '../../core/domain/ports/IConfigService.js';
 import { ResolvedProvider, resolveProvider, buildEndpoint } from './providerPresets.js';
+import { currentAiOverride, maskKey } from './requestAiConfig.js';
 
 export class ClaudeApiClient implements IAiService {
   /** 마지막 실제 호출이 실패했는지. 키가 있어도 실패하면 degraded 로 알린다. */
@@ -19,10 +20,21 @@ export class ClaudeApiClient implements IAiService {
    * 프로바이더별 기본 주소·모델은 프리셋이 채운다. 예전 변수명도 계속 읽는다.
    */
   private resolve(): ResolvedProvider {
-    return resolveProvider(process.env, this.config.anthropicApiKey);
+    return resolveProvider(process.env, this.config.anthropicApiKey, currentAiOverride());
   }
 
   private logResolutionOnce(provider: ResolvedProvider): void {
+    // 방문자가 자기 키를 쓴 경우엔 매 요청마다 남긴다(누가 어떤 키로 호출했는지 추적).
+    // 값은 마스킹하고, 키 원문은 로그에 남기지 않는다.
+    if (provider.source === 'byok') {
+      this.logger.info('ClaudeApiClient', 'Using caller-provided key', {
+        provider: provider.id,
+        model: provider.model,
+        key: maskKey(provider.key),
+        baseHost: this.hostOf(provider.baseUrl),
+      });
+      return;
+    }
     if (this.loggedResolution) return;
     this.loggedResolution = true;
     this.logger.info('ClaudeApiClient', 'AI provider resolved', {
@@ -132,6 +144,8 @@ export class ClaudeApiClient implements IAiService {
     });
 
     if (!response.ok) {
+      // 429 는 "설정 오류"가 아니라 "쿼터 소진"이다. 원인을 구분해서 남긴다.
+      if (response.status === 429) throw new Error(`anthropic quota or rate limit exceeded (429)`);
       throw new Error(`Anthropic API error: ${response.status} ${response.statusText}`);
     }
 
@@ -160,6 +174,7 @@ export class ClaudeApiClient implements IAiService {
     });
 
     if (!response.ok) {
+      if (response.status === 429) throw new Error(`${provider.id} quota or rate limit exceeded (429)`);
       throw new Error(`${provider.id} API error: ${response.status} ${response.statusText}`);
     }
 

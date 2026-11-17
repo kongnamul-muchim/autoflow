@@ -304,6 +304,38 @@ curl -s localhost:4002/api/health
 `sample` 은 키가 없다는 뜻이고, `degraded` 는 키는 있는데 마지막 호출이 실패해 예시로 떨어졌다는 뜻이다.
 키가 있다고 무조건 `live` 라고 말하지 않는다.
 
+### 방문자가 자기 키로 테스트하기 (BYOK)
+
+서버에 키가 없어도 방문자가 자기 키를 넣어 실제 모델을 호출해볼 수 있다. 운영자 키를 공개 데모에
+넣지 않아도 되고, 과금은 키 소유자에게만 발생한다.
+
+```
+브라우저  ── POST /api/describe
+            X-AI-Key: <방문자 키>
+            X-AI-Provider: gemini            (선택)
+            X-AI-Model: gemini-2.5-flash     (선택)
+                │
+서버        AsyncLocalStorage 로 이 요청에만 키를 붙인다 (저장 안 함, 로그는 마스킹)
+                │
+프로바이더   실제 모델 호출
+```
+
+- 키는 브라우저 `sessionStorage` 에만 둔다 → 탭을 닫으면 사라진다. `localStorage` 는 쓰지 않는다.
+- 서버는 키를 **저장하지 않고** 요청 처리에만 쓴다. 로그에는 `tes****1234` 처럼 마스킹해서 남긴다.
+- **base URL 은 헤더로 받지 않는다.** 클라이언트가 base 를 정할 수 있으면 서버가 임의 주소로 요청을
+  보내는 SSRF 통로가 된다(내부 메타데이터 주소 등). base 는 서버 env 만 신뢰한다.
+- 응답 헤더 `X-AI-Mode` / `X-AI-Provider` / `X-AI-Key-Source: caller` 로 이번 응답이 실제 호출인지
+  예시인지 기계가 확인할 수 있다.
+
+```bash
+curl -s -D- -X POST localhost:4002/api/describe \
+  -H 'Content-Type: application/json' \
+  -H 'X-AI-Key: <방문자 키>' -H 'X-AI-Provider: gemini' \
+  -d '{"name":"무선 청소기","category":"가전"}' | grep -i x-ai
+# X-AI-Mode: live
+# X-AI-Key-Source: caller
+```
+
 ### 응답 파싱
 
 실제 모델은 JSON 만 달랑 주지 않는다. ` ```json ` 펜스로 감싸거나 앞뒤에 설명을 붙인다.

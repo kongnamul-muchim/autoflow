@@ -138,6 +138,21 @@
   /* display:flex 가 hidden 속성을 덮어써서 안내문이 계속 보이던 문제 */
   .mock-notice[hidden] { display: none; }
 
+  /* ── 내 키로 테스트 (BYOK) ── */
+  .byok { max-width: 860px; margin: 18px auto 0; padding: 0 16px; }
+  .byok details { background: #fff; border: 1px solid #e5e7eb; border-radius: 12px; padding: 12px 16px; }
+  .byok summary { cursor: pointer; font-weight: 600; font-size: 14px; }
+  .byok-note { font-size: 12px; color: #6b7280; line-height: 1.6; margin: 10px 0 12px; }
+  .byok-row { display: flex; gap: 8px; flex-wrap: wrap; }
+  .byok-row select, .byok-row input { padding: 8px 10px; border: 1px solid #d1d5db; border-radius: 8px; font-size: 13px; }
+  .byok-row input#byokKey { flex: 1 1 220px; min-width: 180px; }
+  .byok-row input#byokModel { flex: 0 1 170px; }
+  .byok-row button { padding: 8px 14px; border-radius: 8px; border: 1px solid #4f6ef7; background: #4f6ef7; color: #fff; font-size: 13px; cursor: pointer; }
+  .byok-row button#byokClear { background: #fff; color: #6b7280; border-color: #d1d5db; }
+  .byok-status { font-size: 12px; margin-top: 8px; min-height: 16px; }
+  .byok-status.ok { color: #047857; }
+  .byok-status.warn { color: #b45309; }
+
   .mock-notice {
     background: var(--orangeLight);
     border: 1.5px solid var(--orange);
@@ -417,7 +432,7 @@
     <div class="hero-stats">
       <span class="hero-stat">🏗️ Clean Architecture</span>
       <span class="hero-stat">🧩 SOLID + DI Container</span>
-      <span class="hero-stat">✅ 87개 테스트 통과</span>
+      <span class="hero-stat">✅ 112개 테스트 통과</span>
       <span class="hero-stat">📦 TypeScript</span>
     </div>
   </div>
@@ -447,6 +462,31 @@
     <span style="font-size:12px">→ 서버 환경변수에 <span class="code">AI_PROVIDER</span>·<span class="code">AI_API_KEY</span> 를 넣고 재시작하면 실제 응답으로 바뀝니다(코드 수정 없음). 키는 서버에만 두고 브라우저로 내려보내지 않습니다.</span>
   </div>
   </div>
+
+  <!-- ─── BYOK: 방문자 자기 키 ─── -->
+  <section class="byok">
+    <details id="byokDetails">
+      <summary>🔑 내 API 키로 직접 테스트하기 (선택)</summary>
+      <p class="byok-note">
+        이 서버에는 AI 키가 없어 <strong>예시 데이터</strong>로 응답합니다. 방문자가 자기 키를 넣으면
+        그 키로 실제 모델을 호출합니다. 키는 <strong>이 브라우저 탭에만</strong> 저장되고(탭을 닫으면 삭제),
+        서버는 요청 처리에만 쓰고 저장하지 않습니다. <strong>과금은 키 소유자에게 발생합니다.</strong>
+      </p>
+      <div class="byok-row">
+        <select id="byokProvider" aria-label="프로바이더">
+          <option value="gemini">gemini</option>
+          <option value="deepseek">deepseek</option>
+          <option value="openai">openai</option>
+          <option value="anthropic">anthropic</option>
+        </select>
+        <input id="byokKey" type="password" placeholder="API 키 (붙여넣기)" autocomplete="off" spellcheck="false">
+        <input id="byokModel" type="text" placeholder="모델 (선택)" autocomplete="off" spellcheck="false">
+        <button id="byokApply" type="button">적용</button>
+        <button id="byokClear" type="button">지우기</button>
+      </div>
+      <div id="byokStatus" class="byok-status"></div>
+    </details>
+  </section>
 
   <!-- ─── USAGE GUIDE ─── -->
   <div class="guide">
@@ -615,7 +655,7 @@
   <div class="container">
     <a href="https://github.com/kongnamul-muchim/autoflow" target="_blank">GitHub</a>
     &nbsp;·&nbsp; Clean Architecture + SOLID + DI Container + TypeScript
-    &nbsp;·&nbsp; Built with Claude Code &middot; 87 tests ✅
+    &nbsp;·&nbsp; Built with Claude Code &middot; 112 tests ✅
   </div>
 </footer>
 
@@ -677,25 +717,46 @@ function showResult(id, data) {
     html += '</div>';
     el.innerHTML += html;
   }
-  // Append mock mode notice to every result
+  // 결과가 어디서 왔는지 매번 밝힌다. 서버 헤더(X-AI-Mode)를 근거로 삼는다.
   if (data.success) {
+    const badge = { live: 'LIVE', degraded: 'DEGRADED', sample: 'SAMPLE' }[lastAiMode] || 'SAMPLE';
+    const text = {
+      live: '실제 AI 응답입니다. (모델이 이번 요청에서 생성)',
+      degraded: 'AI 호출이 실패해 <strong>예시 데이터</strong>로 대체했습니다. 키·쿼터·모델명을 확인하세요.',
+      sample: '이 서버에는 키가 없어 <strong>고정 예시 데이터</strong>를 돌려줬습니다. 위에 내 키를 넣으면 실제 응답을 볼 수 있습니다.',
+    }[lastAiMode] || '이 서버에는 키가 없어 <strong>고정 예시 데이터</strong>를 돌려줬습니다.';
+    const color = lastAiMode === 'live' ? '#065f46' : '#92400e';
+    const bg = lastAiMode === 'live' ? '#d1fae5' : '#fef3c7';
+    const border = lastAiMode === 'live' ? '#10b981' : '#fbbf24';
     const mockNote = document.createElement('div');
-    mockNote.style.cssText = 'margin-top:12px;padding:8px 12px;background:#fef3c7;border-radius:6px;font-size:11px;color:#92400e;border:1px solid #fbbf24;line-height:1.5';
-    mockNote.innerHTML = '🔧 <strong>Mock 데이터</strong> — 실제 Claude API 키(ANTHROPIC_API_KEY)를 연결하면 AI가 실시간 생성하는 결과물로 전환됩니다. <a href="https://github.com/kongnamul-muchim/autoflow" target="_blank" style="color:#4f6ef7;font-weight:500;text-decoration:none">GitHub</a>';
+    mockNote.style.cssText = 'margin-top:12px;padding:8px 12px;background:' + bg + ';border-radius:6px;font-size:11px;color:' + color + ';border:1px solid ' + border + ';line-height:1.5';
+    mockNote.innerHTML = '<strong>' + badge + '</strong> — ' + text;
     el.appendChild(mockNote);
   }
   el.scrollIntoView({ behavior: 'smooth', block: 'nearest' });
 }
 
 // ── API Calls ──
+// 서버가 응답 헤더로 알려준 모드(live/sample/degraded)를 기억해 결과 안내문에 쓴다.
+let lastAiMode = null;
+
 async function apiCall(endpoint, body, spinnerId) {
   setLoading(spinnerId, true);
   try {
+    const headers = { 'Content-Type': 'application/json' };
+    const byok = getByok();
+    if (byok && byok.key) {
+      // 키는 이 요청 헤더로만 나간다. 서버는 저장하지 않고 처리 후 버린다.
+      headers['X-AI-Key'] = byok.key;
+      if (byok.provider) headers['X-AI-Provider'] = byok.provider;
+      if (byok.model) headers['X-AI-Model'] = byok.model;
+    }
     const res = await fetch('api/' + endpoint, {
       method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
+      headers,
       body: JSON.stringify(body),
     });
+    lastAiMode = res.headers.get('X-AI-Mode');
     const data = await res.json();
     return data;
   } catch (e) {
@@ -752,6 +813,66 @@ async function runPipeline() {
   showResult('pipeline', result);
 }
 
+// ── 내 키로 테스트 (BYOK) ──
+// 키는 sessionStorage 에만 둔다(탭을 닫으면 사라짐). 서버로는 요청 헤더로만 보내고 저장하지 않는다.
+const BYOK_STORE = 'af_byok';
+let serverLabel = '';
+
+function getByok() {
+  try { return JSON.parse(sessionStorage.getItem(BYOK_STORE) || 'null'); } catch { return null; }
+}
+
+function setByok(value) {
+  if (value && value.key) sessionStorage.setItem(BYOK_STORE, JSON.stringify(value));
+  else sessionStorage.removeItem(BYOK_STORE);
+  paintByok();
+  paintLabel();
+}
+
+function paintLabel() {
+  const el = document.getElementById('modeLabel');
+  if (!el) return;
+  const b = getByok();
+  el.textContent = serverLabel + (b && b.key ? ' · 내 키 사용 (' + (b.provider || '기본') + ')' : '');
+}
+
+function paintByok() {
+  const b = getByok();
+  const st = document.getElementById('byokStatus');
+  const det = document.getElementById('byokDetails');
+  const key = document.getElementById('byokKey');
+  const provider = document.getElementById('byokProvider');
+  const model = document.getElementById('byokModel');
+  if (key) key.value = b && b.key ? b.key : '';
+  if (provider && b && b.provider) provider.value = b.provider;
+  if (model) model.value = b && b.model ? b.model : '';
+  if (!st) return;
+  if (b && b.key) {
+    st.className = 'byok-status ok';
+    st.textContent = '✅ 이 탭에서만 ' + (b.provider || '기본') + ' 키로 호출합니다. 탭을 닫으면 사라집니다.';
+    if (det) det.open = true;
+  } else {
+    st.className = 'byok-status';
+    st.textContent = '';
+  }
+}
+
+document.getElementById('byokApply')?.addEventListener('click', () => {
+  const key = (document.getElementById('byokKey')?.value || '').trim();
+  const st = document.getElementById('byokStatus');
+  if (!key) {
+    if (st) { st.className = 'byok-status warn'; st.textContent = '키를 입력하세요.'; }
+    return;
+  }
+  setByok({
+    key,
+    provider: document.getElementById('byokProvider')?.value || '',
+    model: (document.getElementById('byokModel')?.value || '').trim(),
+  });
+});
+document.getElementById('byokClear')?.addEventListener('click', () => setByok(null));
+paintByok();
+
 // ── 모드 표시 ──
 // 서버가 알려주는 aiMode 로 "지금 실제 AI 인지 샘플인지"를 화면에 그대로 반영한다.
 // 키를 넣고 재시작하면 안내문이 사라지고 LIVE 로 바뀐다. 문구를 손으로 고칠 필요가 없다.
@@ -780,16 +901,19 @@ async function runPipeline() {
     const who = [health.aiProvider, health.aiModel].filter(Boolean).join(' / ');
     if (health.aiMode === 'live') {
       if (notice) notice.hidden = true;
-      if (label) label.textContent = 'LIVE · ' + (who || 'AI 연동');
+      serverLabel = 'LIVE · ' + (who || 'AI 연동');
+      paintLabel();
     } else if (health.aiMode === 'degraded') {
       if (notice) {
         notice.hidden = false;
         notice.querySelector('strong').textContent = 'API 호출이 실패해 예시로 대체 중입니다.';
       }
-      if (label) label.textContent = 'DEGRADED · 호출 실패' + (who ? ' (' + who + ')' : '');
+      serverLabel = 'DEGRADED · 호출 실패' + (who ? ' (' + who + ')' : '');
+      paintLabel();
     } else {
       if (notice) notice.hidden = false;
-      if (label) label.textContent = '샘플 응답 모드 (키 미설정)';
+      serverLabel = '샘플 응답 모드 (키 미설정)';
+      paintLabel();
     }
     // 설정이 어긋나 있으면 화면에도 그대로 적는다. 샘플 안내문과는 별개 박스로 둔다
     // (live 인데 '샘플 모드' 문구가 같이 뜨는 모순을 만들지 않기 위해서).

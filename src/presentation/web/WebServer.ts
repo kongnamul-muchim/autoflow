@@ -1,4 +1,5 @@
 import express from 'express';
+import { runWithAiOverride, currentAiOverride } from '../../infrastructure/ai/requestAiConfig.js';
 import cors from 'cors';
 import * as path from 'node:path';
 import * as fs from 'node:fs';
@@ -46,6 +47,38 @@ async function createApp() {
 
   app.use(cors());
   app.use(express.json());
+
+  // ── 방문자 자기 키(BYOK) ──
+  // 헤더로 온 키는 이 요청 처리 동안만 메모리에 존재한다. 저장하지 않고, 로그에도 원문을 남기지 않는다.
+  // base URL 은 헤더로 받지 않는다. 클라이언트가 base 를 정할 수 있으면 서버가 임의 주소로
+  // 요청을 보내는 SSRF 통로가 되기 때문이다. base 는 서버 env 만 신뢰한다.
+  app.use((req, _res, next) => {
+    const key = (req.get('x-ai-key') || '').trim();
+    if (!key || key.length > 400) return next();
+    const override = {
+      key,
+      provider: (req.get('x-ai-provider') || '').trim().toLowerCase() || undefined,
+      model: (req.get('x-ai-model') || '').trim() || undefined,
+    };
+    runWithAiOverride(override, () => next());
+  });
+
+  // 어떤 모드로 응답했는지 기계가 읽을 수 있게 헤더로도 알린다(본문 형태를 건드리지 않기 위해).
+  app.use((_req, res, next) => {
+    const send = res.json.bind(res);
+    res.json = (body: unknown) => {
+      try {
+        const override = currentAiOverride();
+        res.setHeader('X-AI-Mode', aiMode());
+        res.setHeader('X-AI-Provider', (override?.provider || aiInfo().provider || 'unknown') as string);
+        if (override) res.setHeader('X-AI-Key-Source', 'caller');
+      } catch {
+        // 헤더를 못 붙여도 응답은 나가야 한다
+      }
+      return send(body);
+    };
+    next();
+  });
 
   // Module-aware root: serve correct HTML before express.static grabs index.html
   app.get('/', (req, res, next) => {
