@@ -1,7 +1,7 @@
 import { describe, it, expect, beforeEach } from 'vitest';
-import { MockCafe24Client, MockMetaClient, MockNaverClient } from '../../../src/infrastructure/api/MockClients';
-import { ILogger } from '../../../src/domain/ports/ILogger';
-import { DateRange } from '../../../src/domain/valueObjects/Types';
+import { MockCafe24Client, MockMetaClient, MockNaverClient } from '../../../src/modules/commerce/infrastructure/api/MockClients.js';
+import { ILogger } from '../../../src/core/domain/ports/ILogger.js';
+import { DateRange } from '../../../src/core/domain/valueObjects/Types.js';
 
 // Silent logger for tests
 class TestLogger implements ILogger {

@@ -2,10 +2,10 @@ import { describe, it, expect, beforeEach, afterEach } from 'vitest';
 import * as fs from 'node:fs/promises';
 import * as path from 'node:path';
 import * as os from 'node:os';
-import { JsonFileTaskRepository, JsonFilePipelineRepository } from '../../../src/infrastructure/repository/JsonFileRepository';
-import { Task, TaskResult } from '../../../src/domain/entities/Task';
-import { Pipeline } from '../../../src/domain/entities/Pipeline';
-import { ILogger } from '../../../src/domain/ports/ILogger';
+import { JsonFileTaskRepository, JsonFilePipelineRepository } from '../../../src/infrastructure/repository/JsonFileRepository.js';
+import { Task, TaskResult } from '../../../src/core/domain/entities/Task.js';
+import { Pipeline } from '../../../src/core/domain/entities/Pipeline.js';
+import { ILogger } from '../../../src/core/domain/ports/ILogger.js';
 
 class TestLogger implements ILogger {
   level = 'debug' as any;

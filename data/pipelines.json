@@ -20,5 +20,80 @@
       }
     ],
     "status": "pending"
+  },
+  "797661da-2150-4de0-9cc9-57570e54ff07": {
+    "id": "797661da-2150-4de0-9cc9-57570e54ff07",
+    "name": "테스트파이프라인",
+    "tasks": [
+      {
+        "id": "7d6ae742-df94-485d-b3bb-1a30b961c590",
+        "name": "테스트파이프라인_step1_product_description",
+        "type": "product_description"
+      },
+      {
+        "id": "3b1f17fa-581b-4025-991d-db4458fb85cb",
+        "name": "테스트파이프라인_step2_marketing_report",
+        "type": "marketing_report"
+      }
+    ],
+    "status": "pending"
+  },
+  "1b792942-57e5-46a7-8001-89962f3a4f13": {
+    "id": "1b792942-57e5-46a7-8001-89962f3a4f13",
+    "name": "검증파이프라인",
+    "tasks": [
+      {
+        "id": "128f3866-b667-46e2-937d-ae6997cb525e",
+        "name": "검증파이프라인_step1_product_description",
+        "type": "product_description"
+      }
+    ],
+    "status": "pending"
+  },
+  "d853544e-a665-4294-ab0f-a3d6dc67657e": {
+    "id": "d853544e-a665-4294-ab0f-a3d6dc67657e",
+    "name": "commerce-test",
+    "tasks": [
+      {
+        "id": "2077a4d2-e399-4a8b-bc1f-83867cb1fa6f",
+        "name": "commerce-test_step1_product_description",
+        "type": "product_description"
+      }
+    ],
+    "status": "pending"
+  },
+  "904df91d-3c31-47ba-bf07-e8c8514ebbe5": {
+    "id": "904df91d-3c31-47ba-bf07-e8c8514ebbe5",
+    "name": "office-test",
+    "tasks": [
+      {
+        "id": "acba7f96-bebe-441c-8758-8f1930709526",
+        "name": "office-test_step1_document_summary",
+        "type": "document_summary"
+      }
+    ],
+    "status": "pending"
+  },
+  "4601aeef-2dee-4520-be8e-7e7a5802d581": {
+    "id": "4601aeef-2dee-4520-be8e-7e7a5802d581",
+    "name": "신규 상품 출시",
+    "tasks": [
+      {
+        "id": "8bb6c7ba-9ccb-4852-acc3-5b47dc137191",
+        "name": "신규 상품 출시_step1_product_description",
+        "type": "product_description"
+      },
+      {
+        "id": "67374609-0ab7-4120-92d6-880c12c29e60",
+        "name": "신규 상품 출시_step2_marketing_report",
+        "type": "marketing_report"
+      },
+      {
+        "id": "6bfd2cc5-f46d-44ab-9f18-6efdd0d1d3ff",
+        "name": "신규 상품 출시_step3_data_sync",
+        "type": "data_sync"
+      }
+    ],
+    "status": "pending"
   }
 }

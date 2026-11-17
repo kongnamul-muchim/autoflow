@@ -1,8 +1,7 @@
-import { Task, TaskResult } from '../../domain/entities/Task.js';
-import { TaskStatus, TaskFilter, TaskType, TaskPriority } from '../../domain/valueObjects/Types.js';
-import { IPipelineRepository, ITaskRepository } from '../../domain/ports/IRepository.js';
-import { Pipeline } from '../../domain/entities/Pipeline.js';
-import { ILogger } from '../../domain/ports/ILogger.js';
+import { Task, TaskResult } from '../../core/domain/entities/Task.js';
+import { IPipelineRepository, ITaskRepository } from '../../core/domain/ports/IRepository.js';
+import { Pipeline } from '../../core/domain/entities/Pipeline.js';
+import { ILogger } from '../../core/domain/ports/ILogger.js';
 import * as fs from 'node:fs/promises';
 import * as path from 'node:path';
 
@@ -24,7 +23,7 @@ export class JsonFileTaskRepository implements ITaskRepository {
     return tasks.get(id) ?? null;
   }
 
-  async findAll(filter?: TaskFilter): Promise<Task[]> {
+  async findAll(filter?: { status?: string; type?: string; priority?: string }): Promise<Task[]> {
     const tasks = Array.from((await this.loadAll()).values());
     if (!filter) return tasks;
 
@@ -36,7 +35,7 @@ export class JsonFileTaskRepository implements ITaskRepository {
     });
   }
 
-  async updateStatus(id: string, status: TaskStatus): Promise<void> {
+  async updateStatus(id: string, status: string): Promise<void> {
     const tasks = await this.loadAll();
     const task = tasks.get(id);
     if (task) {
@@ -61,10 +60,10 @@ export class JsonFileTaskRepository implements ITaskRepository {
         const task = new Task(
           v.id as string,
           v.name as string,
-          v.type as TaskType,
+          v.type as string,
           v.config as Record<string, unknown>,
-          v.status as TaskStatus,
-          v.priority as TaskPriority,
+          v.status as string,
+          v.priority as string,
           new Date(v.createdAt as string),
         );
         if (v.result) {
@@ -131,7 +130,7 @@ export class JsonFilePipelineRepository implements IPipelineRepository {
       for (const [key, val] of Object.entries(parsed)) {
         const v = val as Record<string, unknown>;
         // Reconstruct using a temp task to bypass validation
-        const tempTask = new Task('tmp', '__init__', 'product_description', {});
+        const tempTask = new Task('tmp', '__init__', 'pipeline_init', {});
         const pipeline = new Pipeline(
           v.id as string,
           v.name as string,

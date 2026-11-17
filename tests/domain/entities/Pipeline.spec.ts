@@ -1,7 +1,6 @@
 import { describe, it, expect } from 'vitest';
-import { Pipeline } from '../../../src/domain/entities/Pipeline.js';
-import { Task } from '../../../src/domain/entities/Task.js';
-import { CronExpression, NotificationConfig } from '../../../src/domain/valueObjects/Types.js';
+import { Pipeline } from '../../../src/core/domain/entities/Pipeline.js';
+import { Task } from '../../../src/core/domain/entities/Task.js';
 
 describe('Pipeline', () => {
   const makeTask = (id: string, status: 'pending' | 'running' | 'completed' | 'failed' = 'pending') => {
@@ -29,11 +28,9 @@ describe('Pipeline', () => {
   });
 
   it('스케줄과 알림을 지정하여 생성한다', () => {
-    const cron = new CronExpression('0 9 * * *');
-    const notif: NotificationConfig = { channel: 'slack', onSuccess: true, onFailure: true };
-    const pipeline = new Pipeline('p-3', '스케줄 파이프라인', [makeTask('t1')], cron, [notif]);
+    const pipeline = new Pipeline('p-3', '스케줄 파이프라인', [makeTask('t1')], '0 9 * * *', [{ channel: 'slack', onSuccess: true, onFailure: true }]);
 
-    expect(pipeline.schedule?.expression).toBe('0 9 * * *');
+    expect(pipeline.schedule).toBe('0 9 * * *');
     expect(pipeline.notifications).toHaveLength(1);
   });
 
@@ -66,7 +63,7 @@ describe('Pipeline', () => {
 
   describe('toJSON()', () => {
     it('Pipeline을 직렬화한다', () => {
-      const pipeline = new Pipeline('p-9', 'JSON 테스트', [makeTask('t1', 'completed')], new CronExpression('@daily'));
+      const pipeline = new Pipeline('p-9', 'JSON 테스트', [makeTask('t1', 'completed')], '@daily');
       const json = pipeline.toJSON();
 
       expect(json.id).toBe('p-9');
@@ -74,22 +71,5 @@ describe('Pipeline', () => {
       expect(json.schedule).toBe('@daily');
       expect(json.status).toBe('completed');
     });
-  });
-});
-
-describe('CronExpression', () => {
-  it('유효한 cron 표현식을 생성한다', () => {
-    const cron = new CronExpression('0 9 * * *');
-    expect(cron.expression).toBe('0 9 * * *');
-  });
-
-  it('@daily, @hourly, @weekly 표현식을 지원한다', () => {
-    expect(new CronExpression('@daily').expression).toBe('@daily');
-    expect(new CronExpression('@hourly').expression).toBe('@hourly');
-    expect(new CronExpression('@weekly').expression).toBe('@weekly');
-  });
-
-  it('유효하지 않은 표현식은 에러를 발생시킨다', () => {
-    expect(() => new CronExpression('invalid')).toThrow('Invalid cron expression');
   });
 });

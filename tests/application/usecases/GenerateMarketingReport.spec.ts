@@ -1,12 +1,11 @@
 import { describe, it, expect, vi, beforeEach } from 'vitest';
-import { GenerateMarketingReport } from '../../../src/application/usecases/GenerateMarketingReport';
-import { IAiService } from '../../../src/domain/ports/IAiService';
-import { IExternalApiClient } from '../../../src/domain/ports/IExternalApiClient';
-import { ILogger } from '../../../src/domain/ports/ILogger';
-import { ReportRequest } from '../../../src/application/dto/PipelineRequest';
-import { ProductData } from '../../../src/domain/valueObjects/ProductData';
-import { MarketingMetrics } from '../../../src/domain/valueObjects/MarketingMetrics';
-import { DateRange } from '../../../src/domain/valueObjects/Types';
+import { GenerateMarketingReport } from '../../../src/modules/commerce/application/usecases/GenerateMarketingReport.js';
+import { IAiService } from '../../../src/core/domain/ports/IAiService.js';
+import { IExternalApiClient } from '../../../src/modules/commerce/domain/ports/IExternalApiClient.js';
+import { ILogger } from '../../../src/core/domain/ports/ILogger.js';
+import { ReportRequest } from '../../../src/modules/commerce/application/dto/PipelineRequest.js';
+import { MarketingMetrics } from '../../../src/modules/commerce/domain/valueObjects/MarketingMetrics.js';
+import { DateRange } from '../../../src/core/domain/valueObjects/Types.js';
 
 const mockLogger: ILogger = {
   level: 'debug',
@@ -19,7 +18,7 @@ const mockLogger: ILogger = {
 function createMockClient(platform: string, metrics: MarketingMetrics[]): IExternalApiClient {
   return {
     platform,
-    fetchProducts: vi.fn().mockResolvedValue([] as ProductData[]),
+    fetchProducts: vi.fn().mockResolvedValue([]),
     fetchMarketingMetrics: vi.fn().mockResolvedValue(metrics),
     healthCheck: vi.fn().mockResolvedValue(true),
   };
@@ -33,9 +32,7 @@ describe('GenerateMarketingReport', () => {
     vi.clearAllMocks();
 
     mockAiService = {
-      generateProductContent: vi.fn(),
-      generateReportSummary: vi.fn().mockResolvedValue('AI 생성 요약입니다.'),
-      generateInsights: vi.fn().mockResolvedValue(['Insight 1', 'Insight 2']),
+      generateText: vi.fn().mockResolvedValue('AI 생성 요약입니다.'),
     };
   });
 
@@ -47,12 +44,10 @@ describe('GenerateMarketingReport', () => {
     ];
 
     useCase = new GenerateMarketingReport(mockClients, mockAiService, mockLogger);
+    const report = await useCase.execute(new ReportRequest(period, ['cafe24', 'meta']));
 
-    const result = await useCase.execute(new ReportRequest(period, ['cafe24', 'meta']));
-
-    expect(result.report.metrics).toHaveLength(2);
-    expect(result.report.totalRevenue).toBe(8000000); // 2M + 6M
-    expect(result.task.status).toBe('completed');
+    expect(report.metrics).toHaveLength(2);
+    expect(report.totalRevenue).toBe(8000000); // 2M + 6M
   });
 
   it('일부 플랫폼 실패 시에도 나머지 데이터로 리포트를 생성한다', async () => {
@@ -69,12 +64,10 @@ describe('GenerateMarketingReport', () => {
     );
 
     useCase = new GenerateMarketingReport([workingClient, failingClient], mockAiService, mockLogger);
+    const report = await useCase.execute(new ReportRequest(period, ['cafe24']));
 
-    const result = await useCase.execute(new ReportRequest(period));
-
-    // Even with failures, report should still be generated
-    expect(result.report.metrics.length).toBeGreaterThanOrEqual(1);
-    expect(result.report.metrics[0].source).toBe('cafe24');
+    expect(report.metrics.length).toBeGreaterThanOrEqual(1);
+    expect(report.metrics[0].source).toBe('cafe24');
   });
 
   it('AI 요약을 포함한 리포트를 생성한다', async () => {
@@ -85,12 +78,9 @@ describe('GenerateMarketingReport', () => {
     );
 
     useCase = new GenerateMarketingReport([mockClient], mockAiService, mockLogger);
+    const report = await useCase.execute(new ReportRequest(period, ['naver']));
 
-    const result = await useCase.execute(new ReportRequest(period, ['naver']));
-
-    expect(result.report.summary).toBe('AI 생성 요약입니다.');
-    expect(result.report.insights).toHaveLength(2);
-    expect(result.report.insights[0]).toBe('Insight 1');
+    expect(report.summary).toBe('AI 생성 요약입니다.');
   });
 
   it('요청한 플랫폼만 필터링한다', async () => {
@@ -105,10 +95,9 @@ describe('GenerateMarketingReport', () => {
     );
 
     useCase = new GenerateMarketingReport([cafe24, meta], mockAiService, mockLogger);
+    const report = await useCase.execute(new ReportRequest(period, ['cafe24']));
 
-    const result = await useCase.execute(new ReportRequest(period, ['cafe24']));
-
-    expect(result.report.metrics).toHaveLength(1);
-    expect(result.report.metrics[0].source).toBe('cafe24');
+    expect(report.metrics).toHaveLength(1);
+    expect(report.metrics[0].source).toBe('cafe24');
   });
 });

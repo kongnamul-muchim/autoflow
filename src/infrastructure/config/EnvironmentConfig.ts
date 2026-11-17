@@ -1,4 +1,4 @@
-import { IConfigService, AppConfig } from '../../domain/ports/IConfigService.js';
+import { IConfigService, AppConfig } from '../../core/domain/ports/IConfigService.js';
 import * as fs from 'node:fs';
 import * as path from 'node:path';
 
@@ -33,6 +33,7 @@ export class EnvironmentConfig implements IConfigService {
       nodeEnv: process.env.NODE_ENV || 'development',
       anthropicApiKey: process.env.ANTHROPIC_API_KEY || '',
       dataDir: process.env.DATA_DIR || './data',
+      activeModule: process.env.AUTOFLOW_MODULE || 'commerce',
       apiKeys: {
         cafe24: process.env.CAFE24_API_KEY || '',
         meta: process.env.META_ADS_ACCESS_TOKEN || '',

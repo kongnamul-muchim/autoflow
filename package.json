@@ -1,7 +1,7 @@
 {
   "name": "autoflow",
-  "version": "0.1.0",
-  "description": "AI 기반 이커머스 업무 자동화 시스템",
+  "version": "0.2.0",
+  "description": "AI 기반 업무 자동화 시스템 — 모듈형 Clean Architecture",
   "type": "module",
   "main": "dist/main.js",
   "bin": {
@@ -20,8 +20,7 @@
     "commander": "^12.0.0",
     "cors": "^2.8.6",
     "express": "^5.2.1",
-    "reflect-metadata": "^0.2.1",
-    "tsyringe": "^4.8.0"
+    "reflect-metadata": "^0.2.1"
   },
   "devDependencies": {
     "@types/cors": "^2.8.19",

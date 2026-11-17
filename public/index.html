@@ -428,21 +428,21 @@
       <div class="icon">📖</div>
       <div class="info-text">
         <strong>AutoFlow</strong> — AI 기반 이커머스 업무 자동화 시스템 ·
-        <strong>v0.1.0</strong> · Mock Mode (API 키 없이 바로 체험 가능)
+        <strong id="appVersion">v0.2.0</strong> · <strong id="modeLabel">모드 확인 중…</strong>
       </div>
     </div>
     <a class="github-link" href="https://github.com/kongnamul-muchim/autoflow" target="_blank">GitHub →</a>
   </div>
 
   <!-- ─── MOCK MODE NOTICE ─── -->
-  <div class="mock-notice">
-    <div class="icon">🔧</div>
-    <div>
-      <strong>현재 Mock 모드로 동작 중입니다.</strong><br>
-      실제 Claude API 키(<span class="code">ANTHROPIC_API_KEY</span>)가 설정되지 않아 <strong>고정된 샘플 데이터</strong>가 출력됩니다.<br>
-      <span style="font-size:12px">→ API 키를 <span class="code">.env</span>에 추가하면 실제 AI가 생성하는 결과물로 자동 전환됩니다 (코드 변경 불필요).</span>
-      <div class="highlight">💡 포트폴리오 제출 시: "데모 모드로 누구나 클릭 한 번에 체험 가능하며, 실제 API 키 연동 시 AI가 실시간 생성합니다"</div>
-    </div>
+  <div class="mock-notice" id="modeNotice" hidden>
+  <div class="icon">🧩</div>
+  <div>
+    <strong>샘플 응답 모드입니다.</strong><br>
+    이 서버에는 <span class="code">ANTHROPIC_API_KEY</span> 가 없어 <strong>고정된 예시 데이터</strong>를 돌려줍니다.
+    입력한 상품과 무관한 내용이 나오는 이유입니다.<br>
+    <span style="font-size:12px">→ 서버 환경변수에 키를 넣고 재시작하면 실제 Claude 응답으로 바뀝니다(코드 수정 없음). 키는 서버에만 두고 브라우저로 내려보내지 않습니다.</span>
+  </div>
   </div>
 
   <!-- ─── USAGE GUIDE ─── -->
@@ -688,7 +688,7 @@ function showResult(id, data) {
 async function apiCall(endpoint, body, spinnerId) {
   setLoading(spinnerId, true);
   try {
-    const res = await fetch('/autoflow/api/' + endpoint, {
+    const res = await fetch('api/' + endpoint, {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify(body),
@@ -748,6 +748,34 @@ async function runPipeline() {
   const result = await apiCall('pipeline', { name, steps: parseInt(steps) || 1 }, 'pipeline');
   showResult('pipeline', result);
 }
+
+// ── 모드 표시 ──
+// 서버가 알려주는 aiMode 로 "지금 실제 AI 인지 샘플인지"를 화면에 그대로 반영한다.
+// 키를 넣고 재시작하면 안내문이 사라지고 LIVE 로 바뀐다. 문구를 손으로 고칠 필요가 없다.
+(async function showMode() {
+  try {
+    const health = await fetch('api/health').then((r) => r.json());
+    const notice = document.getElementById('modeNotice');
+    const label = document.getElementById('modeLabel');
+    const version = document.getElementById('appVersion');
+    if (version && health.version) version.textContent = 'v' + health.version;
+    if (health.aiMode === 'live') {
+      if (notice) notice.hidden = true;
+      if (label) label.textContent = 'LIVE · Claude API 연동';
+    } else if (health.aiMode === 'degraded') {
+      if (notice) {
+        notice.hidden = false;
+        notice.querySelector('strong').textContent = 'API 호출이 실패해 예시로 대체 중입니다.';
+      }
+      if (label) label.textContent = 'DEGRADED · 호출 실패';
+    } else {
+      if (notice) notice.hidden = false;
+      if (label) label.textContent = '샘플 응답 모드 (키 미설정)';
+    }
+  } catch {
+    if (label) label.textContent = '모드 확인 실패';
+  }
+})();
 </script>
 
 </body>

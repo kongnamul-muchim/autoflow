@@ -1,0 +1,714 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>AutoFlow — AI 기반 사무 업무 자동화</title>
+<style>
+  :root {
+    --bg: #f8faff;
+    --surface: #ffffff;
+    --surface2: #f0f4fe;
+    --border: #dce3f0;
+    --text: #1a2332;
+    --textDim: #5a6a82;
+    --accent: #4f6ef7;
+    --accentLight: #eef1fe;
+    --accentDark: #3a54d4;
+    --green: #10b981;
+    --greenLight: #d1fae5;
+    --orange: #f59e0b;
+    --orangeLight: #fef3c7;
+    --purple: #8b5cf6;
+    --purpleLight: #ede9fe;
+    --pink: #ec4899;
+    --radius: 14px;
+    --shadow: 0 1px 3px rgba(0,0,0,0.04), 0 4px 16px rgba(0,0,0,0.04);
+  }
+  * { margin: 0; padding: 0; box-sizing: border-box; }
+  body {
+    font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', 'Noto Sans KR', system-ui, sans-serif;
+    background: var(--bg);
+    color: var(--text);
+    min-height: 100vh;
+    -webkit-font-smoothing: antialiased;
+  }
+  .container { max-width: 960px; margin: 0 auto; padding: 0 20px; }
+
+  .hero {
+    background: linear-gradient(135deg, #4f6ef7 0%, #8b5cf6 50%, #ec4899 100%);
+    color: #fff;
+    padding: 52px 0 48px;
+    position: relative;
+    overflow: hidden;
+  }
+  .hero::after {
+    content: '';
+    position: absolute;
+    inset: 0;
+    background: radial-gradient(ellipse 600px 300px at 90% 20%, rgba(255,255,255,0.12), transparent);
+    pointer-events: none;
+  }
+  .hero .container { position: relative; z-index: 1; }
+  .hero-badge {
+    display: inline-block;
+    background: rgba(255,255,255,0.18);
+    backdrop-filter: blur(4px);
+    padding: 4px 14px;
+    border-radius: 20px;
+    font-size: 12px;
+    font-weight: 600;
+    margin-bottom: 16px;
+    letter-spacing: 0.3px;
+  }
+  .hero h1 {
+    font-size: 34px;
+    font-weight: 800;
+    letter-spacing: -0.5px;
+    margin-bottom: 10px;
+  }
+  .hero h1 span { opacity: 0.85; }
+  .hero p {
+    font-size: 16px;
+    opacity: 0.88;
+    line-height: 1.6;
+    max-width: 600px;
+    margin-bottom: 20px;
+  }
+  .hero-stats {
+    display: flex;
+    gap: 24px;
+    flex-wrap: wrap;
+  }
+  .hero-stat {
+    display: flex;
+    align-items: center;
+    gap: 6px;
+    font-size: 13px;
+    opacity: 0.8;
+  }
+
+  .info-card {
+    background: var(--surface);
+    border: 1px solid var(--border);
+    border-radius: var(--radius);
+    padding: 20px 24px;
+    margin: 24px 0;
+    box-shadow: var(--shadow);
+    display: flex;
+    flex-wrap: wrap;
+    align-items: center;
+    justify-content: space-between;
+    gap: 12px;
+  }
+  .info-card .left {
+    display: flex;
+    align-items: center;
+    gap: 14px;
+  }
+  .info-card .icon {
+    width: 40px;
+    height: 40px;
+    background: var(--accentLight);
+    border-radius: 10px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 18px;
+    flex-shrink: 0;
+  }
+  .info-card .info-text { font-size: 14px; line-height: 1.5; }
+  .info-card .info-text strong { color: var(--accent); }
+  .info-card .github-link {
+    padding: 8px 18px;
+    background: var(--text);
+    color: #fff;
+    border-radius: 8px;
+    font-size: 13px;
+    font-weight: 600;
+    text-decoration: none;
+    white-space: nowrap;
+    transition: opacity 0.15s;
+  }
+  .info-card .github-link:hover { opacity: 0.85; }
+
+  .mock-notice {
+    background: var(--purpleLight);
+    border: 1.5px solid var(--purple);
+    border-radius: var(--radius);
+    padding: 14px 20px;
+    margin: -12px 0 20px;
+    display: flex;
+    align-items: flex-start;
+    gap: 12px;
+    font-size: 13px;
+    line-height: 1.6;
+    box-shadow: var(--shadow);
+  }
+  .mock-notice .icon { font-size: 20px; flex-shrink: 0; margin-top: 1px; }
+  .mock-notice strong { color: #5b21b6; }
+  .mock-notice .code {
+    display: inline-block;
+    background: rgba(0,0,0,0.06);
+    padding: 1px 6px;
+    border-radius: 4px;
+    font-family: 'SF Mono', 'Fira Code', monospace;
+    font-size: 12px;
+  }
+  .mock-notice .highlight {
+    background: rgba(139,92,246,0.15);
+    padding: 8px 12px;
+    border-radius: 6px;
+    margin-top: 6px;
+    font-size: 12px;
+  }
+  .mock-tag {
+    display: inline-block;
+    background: var(--purpleLight);
+    color: #5b21b6;
+    font-size: 11px;
+    font-weight: 700;
+    padding: 2px 8px;
+    border-radius: 4px;
+    vertical-align: middle;
+    margin-left: 4px;
+  }
+
+  .guide {
+    background: var(--surface);
+    border: 1px solid var(--border);
+    border-radius: var(--radius);
+    padding: 24px;
+    margin-bottom: 20px;
+    box-shadow: var(--shadow);
+  }
+  .guide h2 {
+    font-size: 15px;
+    font-weight: 700;
+    margin-bottom: 14px;
+    display: flex;
+    align-items: center;
+    gap: 8px;
+  }
+  .guide-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+    gap: 10px;
+  }
+  .guide-item {
+    background: var(--surface2);
+    border-radius: 10px;
+    padding: 14px 16px;
+    display: flex;
+    align-items: flex-start;
+    gap: 12px;
+    transition: transform 0.15s;
+  }
+  .guide-item:hover { transform: translateY(-1px); }
+  .guide-item .step {
+    width: 26px;
+    height: 26px;
+    background: var(--accent);
+    color: #fff;
+    border-radius: 8px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 13px;
+    font-weight: 700;
+    flex-shrink: 0;
+  }
+  .guide-item .step.green { background: var(--green); }
+  .guide-item .step.orange { background: var(--orange); }
+  .guide-item .step.purple { background: var(--purple); }
+  .guide-item .step.pink { background: var(--pink); }
+  .guide-item strong { display: block; font-size: 14px; margin-bottom: 2px; }
+  .guide-item span { font-size: 12px; color: var(--textDim); line-height: 1.4; }
+
+  .tabs {
+    display: flex;
+    gap: 4px;
+    margin-bottom: 16px;
+    background: var(--surface);
+    border: 1px solid var(--border);
+    border-radius: var(--radius);
+    padding: 4px;
+    flex-wrap: wrap;
+    box-shadow: var(--shadow);
+  }
+  .tab {
+    flex: 1;
+    min-width: 110px;
+    padding: 12px 14px;
+    border: none;
+    background: transparent;
+    color: var(--textDim);
+    font-size: 14px;
+    font-weight: 500;
+    border-radius: 10px;
+    cursor: pointer;
+    transition: all 0.2s;
+    text-align: center;
+  }
+  .tab:hover { color: var(--text); background: var(--surface2); }
+  .tab.active {
+    background: var(--purpleLight);
+    color: var(--accentDark);
+    font-weight: 600;
+  }
+
+  .panel { display: none; }
+  .panel.active { display: block; }
+
+  .card {
+    background: var(--surface);
+    border: 1px solid var(--border);
+    border-radius: var(--radius);
+    padding: 24px;
+    margin-bottom: 16px;
+    box-shadow: var(--shadow);
+  }
+  .card h2 { font-size: 17px; font-weight: 700; margin-bottom: 4px; }
+  .card .desc { color: var(--textDim); font-size: 13px; margin-bottom: 20px; line-height: 1.5; }
+
+  .form-group { margin-bottom: 14px; }
+  .form-group label {
+    display: block;
+    font-size: 13px;
+    font-weight: 600;
+    color: var(--textDim);
+    margin-bottom: 5px;
+  }
+  .form-group input, .form-group select, .form-group textarea {
+    width: 100%;
+    padding: 10px 14px;
+    background: var(--bg);
+    border: 1.5px solid var(--border);
+    border-radius: 10px;
+    color: var(--text);
+    font-size: 14px;
+    outline: none;
+    transition: all 0.2s;
+    font-family: inherit;
+  }
+  .form-group textarea { resize: vertical; min-height: 80px; }
+  .form-group input:focus, .form-group select:focus, .form-group textarea:focus {
+    border-color: var(--accent);
+    box-shadow: 0 0 0 3px rgba(79,110,247,0.12);
+  }
+  .form-row {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 12px;
+  }
+
+  .btn {
+    padding: 10px 24px;
+    border: none;
+    border-radius: 10px;
+    font-size: 14px;
+    font-weight: 600;
+    cursor: pointer;
+    transition: all 0.15s;
+    display: inline-flex;
+    align-items: center;
+    gap: 8px;
+  }
+  .btn-primary {
+    background: linear-gradient(135deg, var(--accent), #6d5ae6);
+    color: #fff;
+    box-shadow: 0 2px 8px rgba(79,110,247,0.3);
+  }
+  .btn-primary:hover { transform: translateY(-1px); box-shadow: 0 4px 16px rgba(79,110,247,0.35); }
+  .btn-primary:disabled { opacity: 0.4; cursor: not-allowed; transform: none; box-shadow: none; }
+
+  .quick-actions { display: flex; gap: 6px; flex-wrap: wrap; margin: 14px 0 4px; }
+  .quick-action {
+    padding: 5px 12px;
+    background: var(--purpleLight);
+    border: 1px solid transparent;
+    border-radius: 8px;
+    color: var(--accent);
+    font-size: 12px;
+    font-weight: 500;
+    cursor: pointer;
+    transition: all 0.15s;
+  }
+  .quick-action:hover {
+    border-color: var(--accent);
+    background: var(--surface);
+  }
+
+  .result {
+    display: none;
+    margin-top: 16px;
+    padding: 16px 18px;
+    border-radius: 10px;
+    background: var(--surface2);
+    border: 1.5px solid var(--border);
+  }
+  .result.show { display: block; }
+  .result.success { border-color: var(--green); background: var(--greenLight); }
+  .result.error { border-color: #fca5a5; background: #fef2f2; }
+  .result .title { font-weight: 700; font-size: 14px; margin-bottom: 8px; }
+  .result .content { font-size: 13px; line-height: 1.7; color: var(--text); white-space: pre-wrap; }
+
+  .spinner {
+    display: none;
+    width: 18px; height: 18px;
+    border: 2.5px solid rgba(255,255,255,0.3);
+    border-top-color: #fff;
+    border-radius: 50%;
+    animation: spin 0.5s linear infinite;
+  }
+  .spinner.show { display: inline-block; }
+  @keyframes spin { to { transform: rotate(360deg); } }
+
+  footer {
+    text-align: center;
+    padding: 36px 0 28px;
+    color: var(--textDim);
+    font-size: 13px;
+  }
+  footer a { color: var(--accent); text-decoration: none; font-weight: 500; }
+  footer a:hover { text-decoration: underline; }
+
+  @media (max-width: 640px) {
+    .form-row { grid-template-columns: 1fr; }
+    .tabs { flex-direction: column; }
+    .hero h1 { font-size: 26px; }
+    .hero { padding: 36px 0 32px; }
+    .guide-grid { grid-template-columns: 1fr; }
+  }
+</style>
+</head>
+<body>
+
+<!-- ─── HERO ─── -->
+<section class="hero">
+  <div class="container">
+    <div class="hero-badge">⚡ Clean Architecture + SOLID + TypeScript</div>
+    <h1>AutoFlow <span>⚡</span></h1>
+    <p>
+      AI 기반 사무 업무 자동화 시스템입니다.<br>
+      문서 요약, 업무 리포트 생성, 데이터 입력 자동화까지 —
+      클릭 한 번으로 사무 업무를 자동화하세요.
+    </p>
+    <div class="hero-stats">
+      <span class="hero-stat">🏗️ Clean Architecture</span>
+      <span class="hero-stat">🧩 SOLID + DI Container</span>
+      <span class="hero-stat">✅ 확장형 모듈 시스템</span>
+      <span class="hero-stat">📦 TypeScript</span>
+    </div>
+  </div>
+</section>
+
+<main class="container">
+
+  <!-- ─── INFO BAR ─── -->
+  <div class="info-card">
+    <div class="left">
+      <div class="icon">📖</div>
+      <div class="info-text">
+        <strong>AutoFlow</strong> — AI 기반 사무 업무 자동화 시스템 ·
+        <strong>v0.2.0</strong> · Office Module
+      </div>
+    </div>
+    <a class="github-link" href="https://github.com/kongnamul-muchim/autoflow" target="_blank">GitHub →</a>
+  </div>
+
+  <!-- ─── MOCK MODE NOTICE ─── -->
+  <div class="mock-notice">
+    <div class="icon">🔧</div>
+    <div>
+      <strong id="modeTitle">샘플 응답 모드입니다.</strong><br>
+      이 서버에 <span class="code">ANTHROPIC_API_KEY</span> 가 없어 <strong>고정된 예시 데이터</strong>를 돌려줍니다.<br>
+      <span style="font-size:12px">→ 서버 환경변수에 키를 넣고 재시작하면 실제 Claude 응답으로 바뀝니다(코드 수정 없음). 키는 서버에만 두고 브라우저로 내려보내지 않습니다.</span>
+    </div>
+  </div>
+
+  <!-- ─── USAGE GUIDE ─── -->
+  <div class="guide">
+    <h2>💡 사용 방법</h2>
+    <div class="guide-grid">
+      <div class="guide-item">
+        <div class="step">1</div>
+        <div>
+          <strong>📄 문서 요약</strong>
+          <span>회의록, 보고서, 기획서의 내용을 입력하면 AI가 핵심 포인트와 액션 아이템을 자동으로 추출합니다.</span>
+        </div>
+      </div>
+      <div class="guide-item">
+        <div class="step green">2</div>
+        <div>
+          <strong>📊 업무 리포트</strong>
+          <span>주간/월간 업무 데이터를 기반으로 AI가 구조화된 리포트와 인사이트를 생성합니다.</span>
+        </div>
+      </div>
+      <div class="guide-item">
+        <div class="step orange">3</div>
+        <div>
+          <strong>📝 데이터 입력</strong>
+          <span>CSV/JSON 형태의 데이터를 일괄 입력하고 AI가 자동으로 검증 및 포맷팅합니다.</span>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- ─── TABS ─── -->
+  <div class="tabs">
+    <button class="tab active" data-tab="summarize">📄 문서 요약</button>
+    <button class="tab" data-tab="report">📊 업무 리포트</button>
+    <button class="tab" data-tab="entry">📝 데이터 입력</button>
+  </div>
+
+  <!-- Tab: 문서 요약 -->
+  <div class="panel active" id="panel-summarize">
+    <div class="card">
+      <h2>📄 AI 문서 요약</h2>
+      <p class="desc">회의록, 보고서, 기획서의 내용을 입력하면 AI가 핵심 요약, 주요 포인트, 액션 아이템을 자동으로 추출합니다. <span class="mock-tag">MOCK</span></p>
+      <div class="form-row">
+        <div class="form-group">
+          <label>문서 제목 *</label>
+          <input type="text" id="doc-title" placeholder="예: 7월 첫째주 주간 회의록">
+        </div>
+        <div class="form-group">
+          <label>문서 타입</label>
+          <select id="doc-type">
+            <option value="meeting_minutes">회의록</option>
+            <option value="report">보고서</option>
+            <option value="proposal">기획서</option>
+            <option value="memo">메모</option>
+          </select>
+        </div>
+      </div>
+      <div class="form-group">
+        <label>문서 내용 *</label>
+        <textarea id="doc-content" rows="6" placeholder="회의록, 보고서 등의 내용을 입력하세요..."></textarea>
+      </div>
+      <div class="form-group">
+        <label>작성자</label>
+        <input type="text" id="doc-author" placeholder="예: 김팀장">
+      </div>
+      <div style="display:flex;align-items:center;gap:10px;flex-wrap:wrap">
+        <button class="btn btn-primary" onclick="summarizeDocument()">
+          <span>📄 요약하기</span>
+          <span class="spinner" id="summarize-spinner"></span>
+        </button>
+        <div class="quick-actions" style="margin:0">
+          <button class="quick-action" onclick="fillSampleMeeting()">📋 회의록 샘플</button>
+          <button class="quick-action" onclick="fillSampleReport()">📊 보고서 샘플</button>
+        </div>
+      </div>
+      <div class="result" id="summarize-result">
+        <div class="title" id="summarize-title"></div>
+        <div class="content" id="summarize-content"></div>
+      </div>
+    </div>
+  </div>
+
+  <!-- Tab: 업무 리포트 -->
+  <div class="panel" id="panel-report">
+    <div class="card">
+      <h2>📊 AI 업무 리포트 생성</h2>
+      <p class="desc">주간/월간 업무 데이터를 기반으로 AI가 구조화된 리포트와 인사이트를 생성합니다. KPI 데이터와 업무 현황이 자동으로 포함됩니다. <span class="mock-tag">MOCK</span></p>
+      <div class="form-row">
+        <div class="form-group">
+          <label>리포트 기간 *</label>
+          <select id="report-period">
+            <option value="daily">일일</option>
+            <option value="weekly" selected>주간</option>
+            <option value="monthly">월간</option>
+            <option value="quarterly">분기</option>
+          </select>
+        </div>
+        <div class="form-group">
+          <label>부서명</label>
+          <input type="text" id="report-dept" placeholder="예: 개발팀">
+        </div>
+      </div>
+      <div style="display:flex;align-items:center;gap:10px">
+        <button class="btn btn-primary" onclick="generateReport()">
+          <span>📊 리포트 생성</span>
+          <span class="spinner" id="report-spinner"></span>
+        </button>
+      </div>
+      <div class="result" id="report-result">
+        <div class="title" id="report-title"></div>
+        <div class="content" id="report-content"></div>
+      </div>
+    </div>
+  </div>
+
+  <!-- Tab: 데이터 입력 -->
+  <div class="panel" id="panel-entry">
+    <div class="card">
+      <h2>📝 AI 데이터 일괄 입력</h2>
+      <p class="desc">JSON 형식의 데이터를 일괄 입력하고 AI가 자동으로 검증 및 처리합니다. <span class="mock-tag">MOCK</span></p>
+      <div class="form-row">
+        <div class="form-group">
+          <label>데이터 출처 *</label>
+          <input type="text" id="entry-source" placeholder="예: ERP, HR, CRM" value="ERP">
+        </div>
+      </div>
+      <div class="form-group">
+        <label>데이터 (JSON 배열)</label>
+        <textarea id="entry-data" rows="5">[
+  {"name": "홍길동", "email": "hong@test.com", "department": "개발팀"},
+  {"name": "김철수", "email": "kim@test.com", "department": "영업팀"}
+]</textarea>
+      </div>
+      <div style="display:flex;align-items:center;gap:10px">
+        <button class="btn btn-primary" onclick="batchEntry()">
+          <span>📝 일괄 입력</span>
+          <span class="spinner" id="entry-spinner"></span>
+        </button>
+      </div>
+      <div class="result" id="entry-result">
+        <div class="title" id="entry-title"></div>
+        <div class="content" id="entry-content"></div>
+      </div>
+    </div>
+  </div>
+
+</main>
+
+<footer>
+  <div class="container">
+    <a href="https://github.com/kongnamul-muchim/autoflow" target="_blank">AutoFlow</a> ·
+    Clean Architecture + SOLID + DI Container ·
+    <a href="https://github.com/kongnamul-muchim" target="_blank">@kongnamul-muchim</a>
+  </div>
+</footer>
+
+<script>
+// ── 모드 표시 ──
+(async function showMode() {
+  try {
+    const health = await fetch('api/health').then((r) => r.json());
+    const notice = document.querySelector('.mock-notice');
+    if (!notice) return;
+    if (health.aiMode === 'live') notice.style.display = 'none';
+    else if (health.aiMode === 'degraded') {
+      const t = document.getElementById('modeTitle');
+      if (t) t.textContent = 'API 호출이 실패해 예시로 대체 중입니다.';
+    }
+  } catch { /* 모드 확인 실패는 화면을 막지 않는다 */ }
+})();
+
+// ── API helper ──
+async function api(path, body) {
+  const res = await fetch(path, {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify(body),
+  });
+  return res.json();
+}
+
+async function summarizeDocument() {
+  const title = document.getElementById('doc-title').value;
+  const content = document.getElementById('doc-content').value;
+  const type = document.getElementById('doc-type').value;
+  const author = document.getElementById('doc-author').value;
+  if (!title || !content) { alert('문서 제목과 내용을 입력하세요.'); return; }
+  showSpinner('summarize-spinner');
+  const result = await api('api/summarize', { title, content, type, author });
+  hideSpinner('summarize-spinner');
+  showResult('summarize-result', result.success,
+    result.success ? '✅ 문서 요약 완료' : '❌ 요약 실패',
+    result.success ? formatSummary(result.data) : result.message);
+}
+
+function formatSummary(data) {
+  let html = `<strong>📋 제목:</strong> ${data.title}<br><br>`;
+  html += `<strong>📝 요약:</strong><br>${data.summary}<br><br>`;
+  if (data.keyPoints?.length) {
+    html += `<strong>🔑 핵심 포인트:</strong><br>`;
+    data.keyPoints.forEach(kp => { html += `• ${kp}<br>`; });
+    html += `<br>`;
+  }
+  if (data.actionItems?.length) {
+    html += `<strong>✅ 액션 아이템:</strong><br>`;
+    data.actionItems.forEach(ai => { html += `• ${ai}<br>`; });
+  }
+  return html;
+}
+
+async function generateReport() {
+  const period = document.getElementById('report-period').value;
+  const dept = document.getElementById('report-dept').value;
+  showSpinner('report-spinner');
+  const result = await api('api/report', { periodType: period, department: dept });
+  hideSpinner('report-spinner');
+  showResult('report-result', result.success,
+    result.success ? '✅ 리포트 생성 완료' : '❌ 생성 실패',
+    result.success ? formatReport(result.data) : result.message);
+}
+
+function formatReport(data) {
+  let html = `<strong>📋 ${data.title}</strong><br><br>`;
+  html += `<strong>📈 요약:</strong><br>${data.summary}<br><br>`;
+  html += `<strong>📊 섹션:</strong> ${data.sectionCount}개<br>`;
+  if (data.insights?.length) {
+    html += `<br><strong>💡 인사이트:</strong><br>`;
+    data.insights.forEach(ins => { html += `• ${ins}<br>`; });
+  }
+  return html;
+}
+
+async function batchEntry() {
+  const source = document.getElementById('entry-source').value;
+  const raw = document.getElementById('entry-data').value;
+  if (!source) { alert('데이터 출처를 입력하세요.'); return; }
+  let records;
+  try { records = JSON.parse(raw); } catch(e) { alert('JSON 형식이 올바르지 않습니다.'); return; }
+  showSpinner('entry-spinner');
+  const result = await api('api/entry', { source, records });
+  hideSpinner('entry-spinner');
+  showResult('entry-result', result.success,
+    result.success ? '✅ 데이터 입력 완료' : '❌ 입력 실패',
+    result.success
+      ? `✅ ${result.data.successCount}/${result.data.totalCount}건 성공<br>⏱️ 처리 시간: ${result.data.totalTime}`
+      : result.message);
+}
+
+// ── Sample Data ──
+function fillSampleMeeting() {
+  document.getElementById('doc-title').value = '7월 첫째주 주간 회의록';
+  document.getElementById('doc-type').value = 'meeting_minutes';
+  document.getElementById('doc-content').value =
+    '참석자: 김팀장, 이대리, 박사원\n\n=== 안건 1: 프로젝트 A 진행상황 ===\n- FE 개발 85% 완료\n- BE API 95% 완료\n- 내주까지 FE 마무리 목표\n\n=== 결정사항 ===\n1. 프로젝트 A 런칭일 7/15(화)로 확정\n2. 추가 인력 1명 채용 공고\n3. 고객사 보고서 매주 금요일 제출';
+  document.getElementById('doc-author').value = '김팀장';
+}
+
+function fillSampleReport() {
+  document.getElementById('doc-title').value = '6월 영업 실적 보고서';
+  document.getElementById('doc-type').value = 'report';
+  document.getElementById('doc-content').value =
+    '=== 6월 영업 실적 ===\n\n[매출 현황]\n- 총 매출: ₩125,000,000 (전월 대비 15% 증가)\n- 영업 이익: ₩32,500,000\n- 신규 계약: 12건\n\n[KPI 달성률]\n- 월 매출 목표: 110% 달성\n- 고객 만족도: 4.2/5.0';
+  document.getElementById('doc-author').value = '영업팀';
+}
+
+// ── UI Helpers ──
+function showSpinner(id) { document.getElementById(id).classList.add('show'); }
+function hideSpinner(id) { document.getElementById(id).classList.remove('show'); }
+function showResult(id, success, title, content) {
+  const el = document.getElementById(id);
+  el.className = 'result show ' + (success ? 'success' : 'error');
+  document.getElementById(id.replace('-result', '-title')).textContent = title;
+  document.getElementById(id.replace('-result', '-content')).innerHTML = content;
+}
+
+// ── Tab Switching ──
+document.querySelectorAll('.tab').forEach(tab => {
+  tab.addEventListener('click', () => {
+    document.querySelectorAll('.tab').forEach(t => t.classList.remove('active'));
+    document.querySelectorAll('.panel').forEach(p => p.classList.remove('active'));
+    tab.classList.add('active');
+    document.getElementById('panel-' + tab.dataset.tab).classList.add('active');
+  });
+});
+</script>
+</body>
+</html>

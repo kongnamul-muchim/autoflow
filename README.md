@@ -251,3 +251,37 @@ npm run test:coverage
 - [ ] 웹 대시보드 (Next.js)
 - [ ] 슬랙 알림 연동
 - [ ] CI/CD (GitHub Actions)
+
+---
+
+## 🔌 AI 연결 방식 (키 주입식)
+
+AI 호출은 `src/infrastructure/ai/ClaudeApiClient.ts` 한 곳에 모여 있고, 키는 코드가 아니라 **환경변수**로 들어간다.
+키가 없으면 샘플 응답, 있으면 실제 Claude 응답 — 코드는 그대로다.
+
+```bash
+cp .env.example .env
+# .env → ANTHROPIC_API_KEY=sk-ant-...
+AUTOFLOW_MODULE=commerce AUTOFLOW_PORT=4002 npm run serve
+```
+
+현재 모드는 서버가 직접 알려준다. 화면 문구를 손으로 바꿀 필요가 없다.
+
+```bash
+curl -s localhost:4002/api/health
+# 키 없음: {"status":"ok","module":"commerce","version":"0.2.0","aiMode":"sample"}
+# 키 있음: {"status":"ok","module":"commerce","version":"0.2.0","aiMode":"live"}
+```
+
+`aiMode` 는 마지막 AI 호출이 실제로 성공했는지로 결정된다. 키는 있는데 호출이 실패하면 `sample` 로 떨어진다
+(키가 있다고 무조건 `live` 라고 말하지 않는다).
+
+검증 방법: `ANTHROPIC_BASE_URL` 을 로컬 스텁으로 돌려 키 주입 경로가 실제로 도는지 확인할 수 있다.
+`node --test`, `npm test` 로 단위 테스트를 돌린 뒤 위 `/api/health` 값까지 확인하는 순서를 권장한다.
+
+모듈은 같은 코드로 두 개를 띄운다.
+
+```bash
+AUTOFLOW_MODULE=commerce AUTOFLOW_PORT=4002 npm run serve
+AUTOFLOW_MODULE=office   AUTOFLOW_PORT=4003 npm run serve
+```

@@ -1,6 +1,6 @@
 import { describe, it, expect } from 'vitest';
-import { Task, TaskResult } from '../../../src/domain/entities/Task.js';
-import { TaskConfig } from '../../../src/domain/valueObjects/Types.js';
+import { Task, TaskResult } from '../../../src/core/domain/entities/Task.js';
+
 
 describe('Task', () => {
   const validConfig: TaskConfig = { name: '테스트상품', category: '립메이크업' };

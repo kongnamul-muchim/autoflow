@@ -1,12 +1,10 @@
 import { describe, it, expect, vi, beforeEach } from 'vitest';
-import { SyncExternalData } from '../../../src/application/usecases/SyncExternalData';
-import { IExternalApiClient } from '../../../src/domain/ports/IExternalApiClient';
-import { ITaskRepository } from '../../../src/domain/ports/IRepository';
-import { ILogger } from '../../../src/domain/ports/ILogger';
-import { ProductData } from '../../../src/domain/valueObjects/ProductData';
-import { MarketingMetrics } from '../../../src/domain/valueObjects/MarketingMetrics';
-import { DateRange } from '../../../src/domain/valueObjects/Types';
-import { SyncRequest } from '../../../src/application/usecases/SyncExternalData';
+import { SyncExternalData, SyncRequest } from '../../../src/modules/commerce/application/usecases/SyncExternalData.js';
+import { IExternalApiClient } from '../../../src/modules/commerce/domain/ports/IExternalApiClient.js';
+import { ITaskRepository } from '../../../src/core/domain/ports/IRepository.js';
+import { ILogger } from '../../../src/core/domain/ports/ILogger.js';
+import { ProductData } from '../../../src/modules/commerce/domain/valueObjects/ProductData.js';
+import { MarketingMetrics } from '../../../src/modules/commerce/domain/valueObjects/MarketingMetrics.js';
 
 const mockLogger: ILogger = {
   level: 'debug',

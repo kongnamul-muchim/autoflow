@@ -1,7 +1,7 @@
 import { describe, it, expect } from 'vitest';
-import { ProductData, ProductContentRequest, ProductContentResult } from '../../../src/domain/valueObjects/ProductData';
-import { MarketingMetrics, Report } from '../../../src/domain/valueObjects/MarketingMetrics';
-import { DateRange, CronExpression } from '../../../src/domain/valueObjects/Types';
+import { ProductData, ProductContentRequest, ProductContentResult } from '../../../src/modules/commerce/domain/valueObjects/ProductData.js';
+import { MarketingMetrics, Report } from '../../../src/modules/commerce/domain/valueObjects/MarketingMetrics.js';
+import { DateRange } from '../../../src/core/domain/valueObjects/Types.js';
 
 describe('ProductData', () => {
   it('유효한 ProductData를 생성한다', () => {

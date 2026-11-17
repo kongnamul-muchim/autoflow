@@ -1,4 +1,4 @@
-import { ILogger, LogLevel } from '../../domain/ports/ILogger.js';
+import { ILogger, LogLevel } from '../../core/domain/ports/ILogger.js';
 
 const LOG_LEVELS: Record<LogLevel, number> = {
   debug: 0,

@@ -186,5 +186,205 @@
     "priority": "medium",
     "createdAt": "2026-06-17T05:10:55.506Z",
     "result": null
+  },
+  "7d6ae742-df94-485d-b3bb-1a30b961c590": {
+    "id": "7d6ae742-df94-485d-b3bb-1a30b961c590",
+    "name": "테스트파이프라인_step1_product_description",
+    "type": "product_description",
+    "config": {
+      "name": "파이프라인_작업_1"
+    },
+    "status": "completed",
+    "priority": "medium",
+    "createdAt": "2026-07-03T06:21:38.762Z",
+    "result": null
+  },
+  "3b1f17fa-581b-4025-991d-db4458fb85cb": {
+    "id": "3b1f17fa-581b-4025-991d-db4458fb85cb",
+    "name": "테스트파이프라인_step2_marketing_report",
+    "type": "marketing_report",
+    "config": {
+      "name": "파이프라인_작업_2"
+    },
+    "status": "completed",
+    "priority": "medium",
+    "createdAt": "2026-07-03T06:21:38.778Z",
+    "result": null
+  },
+  "15cd0328-34dc-4c42-a3a1-6f0f7eb1f84b": {
+    "id": "15cd0328-34dc-4c42-a3a1-6f0f7eb1f84b",
+    "name": "상품설명_파이프라인_작업_1",
+    "type": "product_description",
+    "config": {
+      "name": "파이프라인_작업_1",
+      "category": "General"
+    },
+    "status": "completed",
+    "priority": "medium",
+    "createdAt": "2026-07-03T06:21:38.795Z",
+    "result": null
+  },
+  "76e686f2-7a7f-41c1-97cd-0d0b37380e85": {
+    "id": "76e686f2-7a7f-41c1-97cd-0d0b37380e85",
+    "name": "상품설명_글로우립스틱",
+    "type": "product_description",
+    "config": {
+      "name": "글로우립스틱",
+      "category": "립메이크업"
+    },
+    "status": "completed",
+    "priority": "medium",
+    "createdAt": "2026-07-03T06:22:20.924Z",
+    "result": null
+  },
+  "128f3866-b667-46e2-937d-ae6997cb525e": {
+    "id": "128f3866-b667-46e2-937d-ae6997cb525e",
+    "name": "검증파이프라인_step1_product_description",
+    "type": "product_description",
+    "config": {
+      "name": "파이프라인_작업_1"
+    },
+    "status": "completed",
+    "priority": "medium",
+    "createdAt": "2026-07-03T06:22:54.752Z",
+    "result": null
+  },
+  "fb283a6c-30b1-4b96-92ab-c046874c7317": {
+    "id": "fb283a6c-30b1-4b96-92ab-c046874c7317",
+    "name": "상품설명_파이프라인_작업_1",
+    "type": "product_description",
+    "config": {
+      "name": "파이프라인_작업_1",
+      "category": "General"
+    },
+    "status": "completed",
+    "priority": "medium",
+    "createdAt": "2026-07-03T06:22:54.764Z",
+    "result": null
+  },
+  "2077a4d2-e399-4a8b-bc1f-83867cb1fa6f": {
+    "id": "2077a4d2-e399-4a8b-bc1f-83867cb1fa6f",
+    "name": "commerce-test_step1_product_description",
+    "type": "product_description",
+    "config": {
+      "name": "파이프라인_작업_1"
+    },
+    "status": "completed",
+    "priority": "medium",
+    "createdAt": "2026-07-03T06:32:21.583Z",
+    "result": null
+  },
+  "56341483-757c-4fb9-9357-f4c51bce9291": {
+    "id": "56341483-757c-4fb9-9357-f4c51bce9291",
+    "name": "상품설명_파이프라인_작업_1",
+    "type": "product_description",
+    "config": {
+      "name": "파이프라인_작업_1",
+      "category": "General"
+    },
+    "status": "completed",
+    "priority": "medium",
+    "createdAt": "2026-07-03T06:32:21.594Z",
+    "result": null
+  },
+  "acba7f96-bebe-441c-8758-8f1930709526": {
+    "id": "acba7f96-bebe-441c-8758-8f1930709526",
+    "name": "office-test_step1_document_summary",
+    "type": "document_summary",
+    "config": {
+      "name": "파이프라인_작업_1"
+    },
+    "status": "completed",
+    "priority": "medium",
+    "createdAt": "2026-07-03T06:32:21.721Z",
+    "result": null
+  },
+  "1dc0b363-b3e2-4903-920a-21370ba7382a": {
+    "id": "1dc0b363-b3e2-4903-920a-21370ba7382a",
+    "name": "상품설명_글로우 립스틱",
+    "type": "product_description",
+    "config": {
+      "name": "글로우 립스틱",
+      "category": "립 메이크업"
+    },
+    "status": "completed",
+    "priority": "medium",
+    "createdAt": "2026-08-11T02:54:07.174Z",
+    "result": null
+  },
+  "3a131f8a-0d61-4d94-9d27-8f306c3bdfc7": {
+    "id": "3a131f8a-0d61-4d94-9d27-8f306c3bdfc7",
+    "name": "데이터동기화_cafe24→meta",
+    "type": "data_sync",
+    "config": {
+      "sourcePlatform": "cafe24",
+      "targetPlatform": "meta"
+    },
+    "status": "completed",
+    "priority": "medium",
+    "createdAt": "2026-08-11T02:54:37.014Z",
+    "result": null
+  },
+  "8bb6c7ba-9ccb-4852-acc3-5b47dc137191": {
+    "id": "8bb6c7ba-9ccb-4852-acc3-5b47dc137191",
+    "name": "신규 상품 출시_step1_product_description",
+    "type": "product_description",
+    "config": {
+      "name": "신규 상품 출시_step_1"
+    },
+    "status": "completed",
+    "priority": "medium",
+    "createdAt": "2026-08-11T02:54:56.333Z",
+    "result": null
+  },
+  "67374609-0ab7-4120-92d6-880c12c29e60": {
+    "id": "67374609-0ab7-4120-92d6-880c12c29e60",
+    "name": "신규 상품 출시_step2_marketing_report",
+    "type": "marketing_report",
+    "config": {
+      "name": "신규 상품 출시_step_2"
+    },
+    "status": "completed",
+    "priority": "medium",
+    "createdAt": "2026-08-11T02:54:56.338Z",
+    "result": null
+  },
+  "6bfd2cc5-f46d-44ab-9f18-6efdd0d1d3ff": {
+    "id": "6bfd2cc5-f46d-44ab-9f18-6efdd0d1d3ff",
+    "name": "신규 상품 출시_step3_data_sync",
+    "type": "data_sync",
+    "config": {
+      "name": "신규 상품 출시_step_3"
+    },
+    "status": "completed",
+    "priority": "medium",
+    "createdAt": "2026-08-11T02:54:56.342Z",
+    "result": null
+  },
+  "90b9715f-305e-476d-a820-bc0def11122d": {
+    "id": "90b9715f-305e-476d-a820-bc0def11122d",
+    "name": "상품설명_신규 상품 출시_step_1",
+    "type": "product_description",
+    "config": {
+      "name": "신규 상품 출시_step_1",
+      "category": "General"
+    },
+    "status": "completed",
+    "priority": "medium",
+    "createdAt": "2026-08-11T02:54:56.361Z",
+    "result": null
+  },
+  "5a52ec47-42eb-4d40-b702-54b52d48f624": {
+    "id": "5a52ec47-42eb-4d40-b702-54b52d48f624",
+    "name": "데이터동기화_cafe24→meta",
+    "type": "data_sync",
+    "config": {
+      "sourcePlatform": "cafe24",
+      "targetPlatform": "meta"
+    },
+    "status": "completed",
+    "priority": "medium",
+    "createdAt": "2026-08-11T02:54:56.398Z",
+    "result": null
   }
 }

@@ -1,94 +1,76 @@
 import { describe, it, expect, beforeEach } from 'vitest';
-import { ClaudeApiClient } from '../../../src/infrastructure/ai/ClaudeApiClient';
-import { ILogger } from '../../../src/domain/ports/ILogger';
-import { IConfigService, AppConfig } from '../../../src/domain/ports/IConfigService';
-import { ProductContentRequest, ProductContentResult } from '../../../src/domain/valueObjects/ProductData';
-import { MarketingMetrics } from '../../../src/domain/valueObjects/MarketingMetrics';
-import { DateRange } from '../../../src/domain/valueObjects/Types';
+import { ClaudeApiClient } from '../../../src/infrastructure/ai/ClaudeApiClient.js';
+import { ILogger } from '../../../src/core/domain/ports/ILogger.js';
+import { IConfigService, AppConfig } from '../../../src/core/domain/ports/IConfigService.js';
 
 class TestLogger implements ILogger {
   level = 'debug' as any;
   messages: { level: string; msg: string }[] = [];
-  debug(_ctx: string, msg: string) { this.messages.push({ level: 'debug', msg }); }
-  info(_ctx: string, msg: string) { this.messages.push({ level: 'info', msg }); }
-  warn(_ctx: string, msg: string) { this.messages.push({ level: 'warn', msg }); }
-  error(_ctx: string, msg: string) { this.messages.push({ level: 'error', msg }); }
+  debug(ctx: string, msg: string) { this.messages.push({ level: 'debug', msg: `[${ctx}] ${msg}` }); }
+  info(ctx: string, msg: string) { this.messages.push({ level: 'info', msg: `[${ctx}] ${msg}` }); }
+  warn(ctx: string, msg: string) { this.messages.push({ level: 'warn', msg: `[${ctx}] ${msg}` }); }
+  error(ctx: string, msg: string) { this.messages.push({ level: 'error', msg: `[${ctx}] ${msg}` }); }
 }
 
-const logger = new TestLogger();
-const mockConfig: AppConfig = {
-  nodeEnv: 'test',
-  anthropicApiKey: '', // empty → Mock fallback
-  dataDir: './data',
-  apiKeys: {},
-};
+class TestConfig implements IConfigService {
+  constructor(private apiKey: string = '') {}
+  get(): AppConfig {
+    return {
+      nodeEnv: 'test',
+      anthropicApiKey: this.apiKey,
+      dataDir: './data',
+      activeModule: 'commerce',
+      apiKeys: {},
+    };
+  }
+  getApiKey(_platform: string): string | undefined { return undefined; }
+  isDevelopment(): boolean { return false; }
+  isProduction(): boolean { return false; }
+}
 
 describe('ClaudeApiClient', () => {
-  let client: ClaudeApiClient;
+  let logger: TestLogger;
 
   beforeEach(() => {
-    logger.messages = [];
-    client = new ClaudeApiClient(logger, mockConfig);
+    logger = new TestLogger();
   });
 
-  describe('generateProductContent', () => {
-    it('Mock 모드에서 상품 콘텐츠를 생성한다', async () => {
-      const request = new ProductContentRequest('글로우 립스틱', '립메이크업', '촉촉한 립스틱', ['립', '글로우']);
+  describe('generateText (Mock 모드)', () => {
+    it('API 키가 없으면 Mock 응답을 반환한다', async () => {
+      const config = new TestConfig('');
+      const client = new ClaudeApiClient(logger, config.get());
 
-      const result = await client.generateProductContent(request);
-
-      expect(result).toBeInstanceOf(ProductContentResult);
-      expect(result.title).toBe('글로우 립스틱');
-      expect(result.description).toBeTruthy();
-      expect(result.keywords.length).toBeGreaterThan(0);
-      expect(result.sellingPoints.length).toBeGreaterThan(0);
-      expect(result.seoDescription).toBeTruthy();
+      const result = await client.generateText('Test prompt');
+      expect(typeof result).toBe('string');
+      expect(result.length).toBeGreaterThan(0);
     });
 
-    it('API 키가 없으면 Mock fallback 경고를 로깅한다', async () => {
-      await client.generateProductContent(
-        new ProductContentRequest('테스트', '카테고리', '설명', []),
+    it('Mock 모드에서 경고 로그를 남긴다', async () => {
+      const config = new TestConfig('');
+      const client = new ClaudeApiClient(logger, config.get());
+
+      await client.generateText('Test prompt');
+      expect(logger.messages.some(m => m.level === 'warn' && m.msg.includes('No API key'))).toBe(true);
+    });
+
+    it('systemPrompt를 전달할 수 있다', async () => {
+      const config = new TestConfig('');
+      const client = new ClaudeApiClient(logger, config.get());
+
+      const result = await client.generateText('Test prompt', 'You are a helpful assistant.');
+      expect(typeof result).toBe('string');
+      expect(result.length).toBeGreaterThan(0);
+    });
+
+    it('commerce 관련 프롬프트에 대해 적절한 Mock 응답을 반환한다', async () => {
+      const config = new TestConfig('');
+      const client = new ClaudeApiClient(logger, config.get());
+
+      const result = await client.generateText(
+        'Create compelling product content for a lipstick...',
+        'You are an e-commerce product copywriter for a Korean beauty brand.',
       );
-
-      const hasWarn = logger.messages.some(m => m.level === 'warn' && m.msg.includes('No API key'));
-      expect(hasWarn).toBe(true);
-    });
-
-    it('대상 고객과 톤을 포함하여 생성한다', async () => {
-      const request = new ProductContentRequest(
-        '립스틱', '립', '설명', ['립'],
-        '20대 여성', '캐주얼',
-      );
-
-      const result = await client.generateProductContent(request);
-      expect(result.title).toBeTruthy();
-    });
-  });
-
-  describe('generateReportSummary', () => {
-    it('Mock 모드에서 리포트 요약을 생성한다', async () => {
-      const period = DateRange.today();
-      const metrics = [
-        new MarketingMetrics('meta', 10000, 500, 20, 1000000, 5000000, period),
-        new MarketingMetrics('naver', 5000, 300, 10, 500000, 2000000, period),
-      ];
-
-      const summary = await client.generateReportSummary(metrics);
-
-      expect(typeof summary).toBe('string');
-      expect(summary.length).toBeGreaterThan(0);
-      expect(summary).toContain('안정적인'); // Mock response contains Korean text
-    });
-  });
-
-  describe('generateInsights', () => {
-    it('데이터로부터 인사이트를 추출한다', async () => {
-      const insights = await client.generateInsights(
-        { revenue: 1000000, cost: 200000 },
-        'marketing',
-      );
-
-      expect(Array.isArray(insights)).toBe(true);
+      expect(result).toContain('글로우 립스틱');
     });
   });
 });

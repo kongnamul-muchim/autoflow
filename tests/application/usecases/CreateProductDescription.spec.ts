@@ -1,16 +1,20 @@
 import { describe, it, expect, vi, beforeEach } from 'vitest';
-import { CreateProductDescription } from '../../../src/application/usecases/CreateProductDescription';
-import { IAiService } from '../../../src/domain/ports/IAiService';
-import { ITaskRepository } from '../../../src/domain/ports/IRepository';
-import { ILogger } from '../../../src/domain/ports/ILogger';
-import { CreateProductRequest } from '../../../src/application/dto/CreateProductRequest';
-import { ProductContentResult } from '../../../src/domain/valueObjects/ProductData';
+import { CreateProductDescription } from '../../../src/modules/commerce/application/usecases/CreateProductDescription.js';
+import { IAiService } from '../../../src/core/domain/ports/IAiService.js';
+import { ITaskRepository } from '../../../src/core/domain/ports/IRepository.js';
+import { ILogger } from '../../../src/core/domain/ports/ILogger.js';
+import { CreateProductRequest } from '../../../src/modules/commerce/application/dto/CreateProductRequest.js';
 
-// Mock implementations
+const MOCK_JSON_RESPONSE = JSON.stringify({
+  title: '글로우 립스틱',
+  description: '선명한 발색의 립스틱',
+  keywords: ['립', '글로우'],
+  sellingPoints: ['지속력', '발색력'],
+  seoDescription: 'SEO 메타 설명',
+});
+
 const mockAiService: IAiService = {
-  generateProductContent: vi.fn(),
-  generateReportSummary: vi.fn(),
-  generateInsights: vi.fn(),
+  generateText: vi.fn().mockResolvedValue(MOCK_JSON_RESPONSE),
 };
 
 const mockRepository: ITaskRepository = {
@@ -38,29 +42,19 @@ describe('CreateProductDescription', () => {
   });
 
   it('성공적으로 상품 설명을 생성한다', async () => {
-    const mockResult = new ProductContentResult(
-      '글로우 립스틱',
-      '선명한 발색의 립스틱',
-      ['립', '글로우'],
-      ['지속력', '발색력'],
-      'SEO 메타 설명',
-      '{"raw":"response"}',
-    );
-    vi.mocked(mockAiService.generateProductContent).mockResolvedValue(mockResult);
-
     const request = new CreateProductRequest('립스틱', '립메이크업', '원본 설명', ['립', '글로우']);
 
     const result = await useCase.execute(request);
 
     expect(result.success).toBe(true);
-    expect(mockAiService.generateProductContent).toHaveBeenCalledOnce();
+    expect(mockAiService.generateText).toHaveBeenCalledOnce();
     expect(mockRepository.save).toHaveBeenCalledOnce();
     expect(mockRepository.updateStatus).toHaveBeenCalledTimes(2); // running, completed
     expect(result.data).toHaveProperty('generatedTitle', '글로우 립스틱');
   });
 
   it('AI 서비스 실패 시 태스크 상태를 failed로 변경한다', async () => {
-    vi.mocked(mockAiService.generateProductContent).mockRejectedValue(new Error('API timeout'));
+    vi.mocked(mockAiService.generateText).mockRejectedValueOnce(new Error('API timeout'));
 
     const request = new CreateProductRequest('립스틱', '립', '설명', []);
 
@@ -69,10 +63,6 @@ describe('CreateProductDescription', () => {
   });
 
   it('Task 저장소에 태스크를 저장한다', async () => {
-    vi.mocked(mockAiService.generateProductContent).mockResolvedValue(
-      new ProductContentResult('T', 'D', [], [], '', ''),
-    );
-
     await useCase.execute(new CreateProductRequest('A', 'B', 'C', ['k']));
 
     expect(mockRepository.save).toHaveBeenCalled();

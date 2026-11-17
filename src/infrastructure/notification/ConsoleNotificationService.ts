@@ -1,9 +1,8 @@
-import { INotificationService, NotificationMessage } from '../../domain/ports/INotificationService.js';
-import { NotificationChannel, NotificationConfig } from '../../domain/valueObjects/Types.js';
-import { ILogger } from '../../domain/ports/ILogger.js';
+import { INotificationService, NotificationMessage } from '../../core/domain/ports/INotificationService.js';
+import { ILogger } from '../../core/domain/ports/ILogger.js';
 
 export class ConsoleNotificationService implements INotificationService {
-  readonly channel: NotificationChannel = 'console';
+  readonly channel = 'console' as const;
 
   constructor(private readonly logger: ILogger) {}
 
@@ -12,7 +11,7 @@ export class ConsoleNotificationService implements INotificationService {
     this.logger.info('ConsoleNotification', `${prefix} ${message.title}: ${message.body}`);
   }
 
-  async sendConfig(config: NotificationConfig, message: NotificationMessage): Promise<void> {
+  async sendConfig(config: { channel: string; onSuccess: boolean; onFailure: boolean }, message: NotificationMessage): Promise<void> {
     if (message.severity === 'error' && config.onFailure) {
       await this.send(message);
     } else if (message.severity === 'success' && config.onSuccess) {
