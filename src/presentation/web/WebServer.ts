@@ -22,9 +22,16 @@ async function createApp() {
     return 'sample';
   };
 
-  const aiProvider = (): string => {
-    const probe = aiService as unknown as { providerName?: () => string };
-    return typeof probe.providerName === 'function' ? probe.providerName() : 'unknown';
+  // 어떤 프로바이더·모델·호스트로 붙어 있는지, 설정에 문제가 있는지까지 그대로 노출한다.
+  // 키 값은 절대 포함하지 않는다.
+  const aiInfo = (): Record<string, unknown> => {
+    const probe = aiService as unknown as {
+      providerInfo?: () => { provider: string; model: string; baseHost: string; protocol: string; warning?: string };
+      providerName?: () => string;
+    };
+    if (typeof probe.providerInfo === 'function') return { ...probe.providerInfo() };
+    const name = typeof probe.providerName === 'function' ? probe.providerName() : 'unknown';
+    return { provider: name };
   };
 
   const webController = new WebController(
@@ -61,7 +68,17 @@ async function createApp() {
 
   // Health check
   app.get('/api/health', (_req, res) => {
-    res.json({ status: 'ok', module: MODULE, version: '0.2.0', aiMode: aiMode(), aiProvider: aiProvider() });
+    const info = aiInfo();
+    res.json({
+      status: 'ok',
+      module: MODULE,
+      version: '0.2.0',
+      aiMode: aiMode(),
+      aiProvider: info.provider ?? 'unknown',
+      aiModel: info.model,
+      aiBaseHost: info.baseHost,
+      aiWarning: info.warning,
+    });
   });
 
   // 파이프라인 실행
@@ -167,6 +184,7 @@ async function createApp() {
     res.sendFile(path.join(PUBLIC_DIR, htmlFile));
   });
 
+  app.locals.aiInfo = aiInfo;
   return app;
 }
 
@@ -180,6 +198,11 @@ app.listen(PORT, '0.0.0.0', () => {
   console.log(`🚀 AutoFlow Web Server running on http://0.0.0.0:${PORT}`);
   console.log(`📂 Module: ${MODULE}`);
   console.log(`📂 Serving static files from ${PUBLIC_DIR}`);
+
+  // 잘못된 AI 설정은 첫 요청이 올 때까지 숨어 있으면 안 된다. 기동 로그에 바로 남긴다.
+  const ai = (app.locals.aiInfo?.() ?? {}) as { provider?: string; model?: string; baseHost?: string; warning?: string };
+  console.log(`🤖 AI: ${ai.provider ?? '-'} / ${ai.model ?? '-'} / ${ai.baseHost ?? '-'}`);
+  if (ai.warning) console.warn(`⚠️  AI 설정 확인 필요: ${ai.warning}`);
 });
 
 export { createApp };

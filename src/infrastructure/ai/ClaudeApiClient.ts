@@ -1,20 +1,12 @@
 import { IAiService } from '../../core/domain/ports/IAiService.js';
 import { ILogger } from '../../core/domain/ports/ILogger.js';
 import { AppConfig } from '../../core/domain/ports/IConfigService.js';
-
-type ProviderKind = 'anthropic' | 'openai-compatible';
-
-interface ResolvedProvider {
-  kind: ProviderKind;
-  name: string;
-  key: string;
-  baseUrl: string;
-  model: string;
-}
+import { ResolvedProvider, resolveProvider, buildEndpoint } from './providerPresets.js';
 
 export class ClaudeApiClient implements IAiService {
   /** 마지막 실제 호출이 실패했는지. 키가 있어도 실패하면 degraded 로 알린다. */
   private lastFailed = false;
+  private loggedResolution = false;
 
   constructor(
     private readonly logger: ILogger,
@@ -22,51 +14,57 @@ export class ClaudeApiClient implements IAiService {
   ) {}
 
   /**
-   * 프로바이더는 환경변수로만 결정된다. 코드는 건드리지 않는다.
-   *  AI_PROVIDER=anthropic(기본)  ANTHROPIC_API_KEY · ANTHROPIC_BASE_URL · AUTOFLOW_MODEL
-   *  AI_PROVIDER=deepseek          DEEPSEEK_API_KEY · DEEPSEEK_API_BASE · DEEPSEEK_MODEL
-   *  AI_PROVIDER=openai            AI_API_KEY · AI_BASE_URL · AI_MODEL
+   * 프로바이더 결정은 providerPresets.ts 한 곳에서만 한다.
+   * 변수는 AI_PROVIDER / AI_API_KEY / AI_MODEL / AI_BASE_URL 네 개로 고정이고,
+   * 프로바이더별 기본 주소·모델은 프리셋이 채운다. 예전 변수명도 계속 읽는다.
    */
-  private resolveProvider(): ResolvedProvider {
-    const provider = (process.env.AI_PROVIDER || 'anthropic').toLowerCase();
+  private resolve(): ResolvedProvider {
+    return resolveProvider(process.env, this.config.anthropicApiKey);
+  }
 
-    if (provider === 'deepseek') {
-      return {
-        kind: 'openai-compatible',
-        name: 'deepseek',
-        key: process.env.DEEPSEEK_API_KEY || process.env.AI_API_KEY || '',
-        baseUrl: process.env.DEEPSEEK_API_BASE || process.env.AI_BASE_URL || 'https://api.deepseek.com',
-        model: process.env.DEEPSEEK_MODEL || process.env.AI_MODEL || 'deepseek-chat',
-      };
+  private logResolutionOnce(provider: ResolvedProvider): void {
+    if (this.loggedResolution) return;
+    this.loggedResolution = true;
+    this.logger.info('ClaudeApiClient', 'AI provider resolved', {
+      provider: provider.id,
+      model: provider.model,
+      baseHost: this.hostOf(provider.baseUrl),
+      keySource: provider.source,
+      hasKey: provider.key !== '',
+    });
+    if (provider.warning) {
+      this.logger.warn('ClaudeApiClient', `AI 설정 확인 필요: ${provider.warning}`);
     }
+  }
 
-    if (provider === 'openai') {
-      return {
-        kind: 'openai-compatible',
-        name: 'openai',
-        key: process.env.AI_API_KEY || '',
-        baseUrl: process.env.AI_BASE_URL || 'https://api.openai.com',
-        model: process.env.AI_MODEL || 'gpt-4o-mini',
-      };
+  private hostOf(baseUrl: string): string {
+    try {
+      return new URL(baseUrl).hostname;
+    } catch {
+      return baseUrl;
     }
+  }
 
+  /** 화면·health 가 그대로 노출하는 요약. 키는 절대 포함하지 않는다. */
+  providerInfo(): { provider: string; model: string; baseHost: string; protocol: string; warning?: string } {
+    const provider = this.resolve();
     return {
-      kind: 'anthropic',
-      name: 'anthropic',
-      key: this.config.anthropicApiKey || process.env.AI_API_KEY || '',
-      baseUrl: process.env.ANTHROPIC_BASE_URL || 'https://api.anthropic.com',
-      model: process.env.AUTOFLOW_MODEL || 'claude-sonnet-4-20250514',
+      provider: provider.id,
+      model: provider.model,
+      baseHost: this.hostOf(provider.baseUrl),
+      protocol: provider.protocol,
+      warning: provider.warning,
     };
   }
 
   /** 키가 실제로 들어와 있는가. */
   isConfigured(): boolean {
-    return this.resolveProvider().key !== '';
+    return this.resolve().key !== '';
   }
 
   /** 지금 어떤 프로바이더로 붙어 있는지. /api/health 가 그대로 노출한다. */
   providerName(): string {
-    return this.resolveProvider().name;
+    return this.resolve().id;
   }
 
   /**
@@ -85,22 +83,23 @@ export class ClaudeApiClient implements IAiService {
   }
 
   async generateText(prompt: string, systemPrompt?: string): Promise<string> {
-    const provider = this.resolveProvider();
+    const provider = this.resolve();
+    this.logResolutionOnce(provider);
 
     this.logger.info('ClaudeApiClient', 'Generating text', {
-      provider: provider.name,
+      provider: provider.id,
       model: provider.model,
       promptLength: prompt.length,
       hasSystemPrompt: !!systemPrompt,
     });
 
     if (!provider.key) {
-      this.logger.warn('ClaudeApiClient', `No API key for provider "${provider.name}", using mock response`);
+      this.logger.warn('ClaudeApiClient', `No API key for provider "${provider.id}", using mock response`);
       return this.generateMockResponse(prompt);
     }
 
     try {
-      const text = provider.kind === 'anthropic'
+      const text = provider.protocol === 'anthropic'
         ? await this.callAnthropic(provider, prompt, systemPrompt)
         : await this.callOpenAiCompatible(provider, prompt, systemPrompt);
       this.lastFailed = false;
@@ -122,7 +121,7 @@ export class ClaudeApiClient implements IAiService {
       body.system = systemPrompt;
     }
 
-    const response = await fetch(`${provider.baseUrl.replace(/\/$/, '')}/v1/messages`, {
+    const response = await fetch(buildEndpoint(provider), {
       method: 'POST',
       headers: {
         'Content-Type': 'application/json',
@@ -145,14 +144,8 @@ export class ClaudeApiClient implements IAiService {
   }
 
   private async callOpenAiCompatible(provider: ResolvedProvider, prompt: string, systemPrompt?: string): Promise<string> {
-    const base = provider.baseUrl.replace(/\/$/, '');
-    // base 가 이미 버전 경로까지 포함하면 그대로 쓰고, 아니면 /v1 을 붙인다.
-    // 예) https://api.deepseek.com            → /v1/chat/completions
-    //     https://.../v1beta/openai/          → /chat/completions  (Gemini 호환)
-    //     http://127.0.0.1:8000/v1            → /chat/completions  (vLLM 등)
-    const endpoint = /\/(v\d+[a-z0-9]*|openai)$/i.test(base)
-      ? `${base}/chat/completions`
-      : `${base}/v1/chat/completions`;
+    // base 에 버전 경로가 이미 있으면 그대로, 없으면 /v1 을 붙인다 (providerPresets.buildEndpoint).
+    const endpoint = buildEndpoint(provider);
     const messages = systemPrompt
       ? [{ role: 'system', content: systemPrompt }, { role: 'user', content: prompt }]
       : [{ role: 'user', content: prompt }];
@@ -167,13 +160,13 @@ export class ClaudeApiClient implements IAiService {
     });
 
     if (!response.ok) {
-      throw new Error(`${provider.name} API error: ${response.status} ${response.statusText}`);
+      throw new Error(`${provider.id} API error: ${response.status} ${response.statusText}`);
     }
 
     const data = await response.json() as { choices?: Array<{ message?: { content?: string } }> };
     const text = data.choices?.[0]?.message?.content;
     if (!text) {
-      throw new Error(`${provider.name} API response has no text content`);
+      throw new Error(`${provider.id} API response has no text content`);
     }
     return text;
   }

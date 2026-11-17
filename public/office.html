@@ -132,6 +132,9 @@
   }
   .info-card .github-link:hover { opacity: 0.85; }
 
+  /* display:flex 가 hidden 속성을 덮어써서 안내문이 계속 보이던 문제 */
+  .mock-notice[hidden] { display: none; }
+
   .mock-notice {
     background: var(--purpleLight);
     border: 1.5px solid var(--purple);

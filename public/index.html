@@ -135,6 +135,9 @@
   .info-card .github-link:hover { opacity: 0.85; }
 
   /* ── Mock Notice Banner ── */
+  /* display:flex 가 hidden 속성을 덮어써서 안내문이 계속 보이던 문제 */
+  .mock-notice[hidden] { display: none; }
+
   .mock-notice {
     background: var(--orangeLight);
     border: 1.5px solid var(--orange);
@@ -438,10 +441,10 @@
   <div class="mock-notice" id="modeNotice" hidden>
   <div class="icon">🧩</div>
   <div>
-    <strong>샘플 응답 모드입니다.</strong><br>
-    이 서버에는 <span class="code">ANTHROPIC_API_KEY</span> 가 없어 <strong>고정된 예시 데이터</strong>를 돌려줍니다.
+    <strong id="noticeTitle">샘플 응답 모드입니다.</strong><br>
+    이 서버에는 <span class="code">AI_API_KEY</span> 가 없어 <strong>고정된 예시 데이터</strong>를 돌려줍니다.
     입력한 상품과 무관한 내용이 나오는 이유입니다.<br>
-    <span style="font-size:12px">→ 서버 환경변수에 키를 넣고 재시작하면 실제 Claude 응답으로 바뀝니다(코드 수정 없음). 키는 서버에만 두고 브라우저로 내려보내지 않습니다.</span>
+    <span style="font-size:12px">→ 서버 환경변수에 <span class="code">AI_PROVIDER</span>·<span class="code">AI_API_KEY</span> 를 넣고 재시작하면 실제 응답으로 바뀝니다(코드 수정 없음). 키는 서버에만 두고 브라우저로 내려보내지 않습니다.</span>
   </div>
   </div>
 
@@ -467,7 +470,7 @@
         <div class="step orange">3</div>
         <div>
           <strong>🔄 데이터 동기화</strong>
-          <span>외부 플랫폼(Cafe24↔Meta↔Naver) 간 상품/데이터를 자동으로 동기화합니다. (현재 Mock 모드)</span>
+          <span>외부 플랫폼(Cafe24↔Meta↔Naver) 간 상품/데이터를 자동으로 동기화합니다.</span>
         </div>
       </div>
       <div class="guide-item">
@@ -492,7 +495,7 @@
   <div class="panel active" id="panel-describe">
     <div class="card">
       <h2>📝 AI 상품 설명 생성</h2>
-      <p class="desc">상품명과 카테고리만 입력하면 AI가 최적화된 상품 제목, 상세 설명, 마케팅 키워드, 판매 포인트(USP), SEO 메타 설명을 자동으로 생성합니다. 한국어 뷰티/이커머스 특화 프롬프트가 적용됩니다. <span class="mock-tag">MOCK</span></p>
+      <p class="desc">상품명과 카테고리만 입력하면 AI가 최적화된 상품 제목, 상세 설명, 마케팅 키워드, 판매 포인트(USP), SEO 메타 설명을 자동으로 생성합니다. 한국어 뷰티/이커머스 특화 프롬프트가 적용됩니다. <span class="mock-tag" id="tagDescribe">MOCK</span></p>
       <div class="form-row">
         <div class="form-group">
           <label>상품명 *</label>
@@ -587,7 +590,7 @@
   <div class="panel" id="panel-pipeline">
     <div class="card">
       <h2>⚙️ 자동화 파이프라인</h2>
-      <p class="desc">여러 자동화 태스크(상품 설명 생성 등)를 파이프라인으로 묶어 순차 실행합니다. 배포/런칭 시 대량 상품 설명을 한 번에 생성하는 등 배치 작업에 활용할 수 있습니다. <span class="mock-tag">MOCK</span></p>
+      <p class="desc">여러 자동화 태스크(상품 설명 생성 등)를 파이프라인으로 묶어 순차 실행합니다. 배포/런칭 시 대량 상품 설명을 한 번에 생성하는 등 배치 작업에 활용할 수 있습니다. <span class="mock-tag" id="tagPipeline">MOCK</span></p>
       <div class="form-row">
         <div class="form-group">
           <label>파이프라인 이름 *</label>
@@ -759,18 +762,50 @@ async function runPipeline() {
     const label = document.getElementById('modeLabel');
     const version = document.getElementById('appVersion');
     if (version && health.version) version.textContent = 'v' + health.version;
+    // 카드에 박아둔 MOCK 태그도 서버 모드를 따라간다 (AI 를 쓰는 기능만).
+    for (const id of ['tagDescribe', 'tagPipeline']) {
+      const tag = document.getElementById(id);
+      if (!tag) continue;
+      if (health.aiMode === 'live') {
+        tag.textContent = 'LIVE';
+        tag.style.background = '#065f46';
+        tag.style.color = '#d1fae5';
+      } else if (health.aiMode === 'degraded') {
+        tag.textContent = 'FALLBACK';
+      } else {
+        tag.textContent = 'MOCK';
+      }
+    }
+    // 어떤 프로바이더·모델로 붙어 있는지도 서버가 알려준다 (키 값은 내려오지 않는다).
+    const who = [health.aiProvider, health.aiModel].filter(Boolean).join(' / ');
     if (health.aiMode === 'live') {
       if (notice) notice.hidden = true;
-      if (label) label.textContent = 'LIVE · Claude API 연동';
+      if (label) label.textContent = 'LIVE · ' + (who || 'AI 연동');
     } else if (health.aiMode === 'degraded') {
       if (notice) {
         notice.hidden = false;
         notice.querySelector('strong').textContent = 'API 호출이 실패해 예시로 대체 중입니다.';
       }
-      if (label) label.textContent = 'DEGRADED · 호출 실패';
+      if (label) label.textContent = 'DEGRADED · 호출 실패' + (who ? ' (' + who + ')' : '');
     } else {
       if (notice) notice.hidden = false;
       if (label) label.textContent = '샘플 응답 모드 (키 미설정)';
+    }
+    // 설정이 어긋나 있으면 화면에도 그대로 적는다. 샘플 안내문과는 별개 박스로 둔다
+    // (live 인데 '샘플 모드' 문구가 같이 뜨는 모순을 만들지 않기 위해서).
+    if (health.aiWarning) {
+      let box = document.getElementById('aiWarning');
+      if (!box) {
+        box = document.createElement('div');
+        box.id = 'aiWarning';
+        box.className = 'mock-notice';
+        box.style.borderColor = '#b45309';
+        box.innerHTML = '<div class="icon">⚠️</div><div><strong>AI 설정 확인 필요</strong><br>' +
+          '<span style="font-size:13px"></span></div>';
+        notice.parentNode.insertBefore(box, notice.nextSibling);
+      }
+      box.querySelector('span').textContent = health.aiWarning;
+      box.hidden = false;
     }
   } catch {
     if (label) label.textContent = '모드 확인 실패';

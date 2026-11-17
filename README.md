@@ -259,28 +259,46 @@ npm run test:coverage
 AI 호출은 `src/infrastructure/ai/ClaudeApiClient.ts` 한 곳에 모여 있고, 키와 프로바이더는 코드가 아니라
 **환경변수**로 들어간다. 코드는 그대로 두고 환경변수만 바꾸면 다른 모델로 갈아탄다.
 
-| `AI_PROVIDER` | 읽는 변수 | 엔드포인트 형식 |
-|---|---|---|
-| `anthropic` (기본) | `ANTHROPIC_API_KEY`, `ANTHROPIC_BASE_URL`, `AUTOFLOW_MODEL` | `/v1/messages` |
-| `deepseek` | `DEEPSEEK_API_KEY`, `DEEPSEEK_API_BASE`, `DEEPSEEK_MODEL` | OpenAI 호환 `/chat/completions` |
-| `openai` | `AI_API_KEY`, `AI_BASE_URL`, `AI_MODEL` | OpenAI 호환 `/chat/completions` |
+변수는 **4개로 고정**이다. 프로바이더마다 키 이름을 따로 외우지 않는다.
 
-OpenAI 호환 경로는 base 에 버전이 이미 들어 있으면(`/v1`, `/v1beta/openai`) 그대로 쓰고, 아니면 `/v1` 을 붙인다.
-그래서 DeepSeek·Gemini·vLLM·OpenRouter 를 같은 코드로 쓸 수 있다.
+| 변수 | 역할 |
+|---|---|
+| `AI_PROVIDER` | `gemini` · `deepseek` · `anthropic` · `openai` · `openrouter` · `groq` · `ollama` |
+| `AI_API_KEY` | 그 제공자의 키 |
+| `AI_MODEL` | 비우면 프리셋 기본 모델 |
+| `AI_BASE_URL` | 게이트웨이/프록시를 쓸 때만 (비우면 프리셋 주소) |
+
+프리셋 표는 `src/infrastructure/ai/providerPresets.ts` 한 곳에 있고, base 주소·기본 모델·프로토콜
+(`/v1/messages` vs OpenAI 호환 `/chat/completions`)이 여기서 결정된다. OpenAI 호환은 base 에 버전이
+이미 있으면(`/v1`, `/v1beta/openai`) 그대로 쓰고 없으면 `/v1` 을 붙인다.
 
 ```bash
 cp .env.example .env
-# .env → AI_PROVIDER=deepseek, DEEPSEEK_API_KEY=...
+# .env → AI_PROVIDER=gemini, AI_API_KEY=...
 AUTOFLOW_MODULE=commerce AUTOFLOW_PORT=4002 npm run serve
 ```
+
+### 선언과 실제가 어긋나면 알려준다
+
+프로바이더별 변수명을 따로 두면 "선언은 deepseek 인데 주소는 Gemini" 같은 상태를 아무도 모른다.
+그래서 `AI_PROVIDER` 와 base 호스트를 대조해 어긋나면 **기동 로그·`/api/health`·화면** 세 곳에 경고를 남긴다.
+
+```bash
+# 실제로 4개월간 이 상태였다
+AI_PROVIDER=deepseek DEEPSEEK_API_BASE=https://generativelanguage.googleapis.com/v1beta/openai/
+# → ⚠️ AI_PROVIDER=deepseek 인데 base host 가 generativelanguage.googleapis.com 입니다 (이 주소는 gemini 것 같습니다)
+```
+
+예전 변수명(`ANTHROPIC_API_KEY`, `DEEPSEEK_API_KEY` …)도 계속 읽는다. 새 이름이 있으면 새 이름이 이긴다.
 
 현재 모드와 프로바이더는 서버가 직접 알려준다. 화면 문구를 손으로 바꿀 필요가 없다.
 
 ```bash
 curl -s localhost:4002/api/health
-# 키 없음        : {"aiMode":"sample","aiProvider":"anthropic"}
-# 키 있고 정상    : {"aiMode":"live","aiProvider":"deepseek"}
-# 키 있는데 실패  : {"aiMode":"degraded","aiProvider":"deepseek"}
+# 키 없음        : {"aiMode":"sample","aiProvider":"anthropic","aiModel":"claude-sonnet-4-20250514","aiBaseHost":"api.anthropic.com"}
+# 키 있고 정상    : {"aiMode":"live","aiProvider":"gemini","aiModel":"gemini-2.5-flash","aiBaseHost":"generativelanguage.googleapis.com"}
+# 키 있는데 실패  : {"aiMode":"degraded", ...}
+# 설정이 어긋남   : {"aiWarning":"AI_PROVIDER=deepseek 인데 base host 가 ..."}
 ```
 
 `sample` 은 키가 없다는 뜻이고, `degraded` 는 키는 있는데 마지막 호출이 실패해 예시로 떨어졌다는 뜻이다.
