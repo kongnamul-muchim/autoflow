@@ -122,7 +122,10 @@ async function createApp() {
         res.status(400).json({ success: false, message: '파이프라인 이름(name)은 필수입니다.' });
         return;
       }
-      const result = await webController.runPipeline({ name, steps: parseInt(steps || '1', 10) });
+      // 상한이 없으면 steps=100000 한 번으로 서버가 멈춘다(실측 300 steps = 17초, data 224KB 증가).
+      const parsedSteps = parseInt(steps || '1', 10);
+      const safeSteps = Math.min(Math.max(Number.isFinite(parsedSteps) ? parsedSteps : 1, 1), 50);
+      const result = await webController.runPipeline({ name, steps: safeSteps });
       res.json(result);
     } catch (error) {
       res.status(500).json({ success: false, message: '서버 오류' });
